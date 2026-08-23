@@ -4,6 +4,7 @@ version = "1.0.0"
 edition = "2021"
 authors = ["Sovereign Architect"]
 description = "Maximum Sovereign AI Code-Generator Compiler"
+autotests = false
 
 [dependencies]
 # Async Runtime & Low-Latency Utilities
@@ -17,6 +18,10 @@ num-bigint = "0.4"
 num-traits = "0.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+# Explicitly Pin rand to 0.8 to force resolution across the tree
+rand = "=0.8.7"
+rand_distr = "=0.4.3"
 
 # Neural Framework (Candle)
 candle-core = "0.6"
@@ -38,11 +43,6 @@ criterion = { version = "0.5", features = ["async_tokio"] }
 [features]
 default = []
 python-extension = ["pyo3"]
-
-# Override sub-dependencies to lock `rand` ecosystem to v0.8 / v0.4
-[patch.crates-io]
-rand = "=0.8.7"
-rand_distr = "=0.4.3"
 
 [[bin]]
 name = "directive_x"
