@@ -46,15 +46,13 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-v2-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-
+            ${{ runner.os }}-cargo-v2-
 
-      - name: Resolve and Lock Rand Dependency Version
-        shell: bash
+      - name: Generate Clean Dependency Tree
         run: |
-          cargo update -p rand@0.9.5 --precise 0.8.7 || true
-          cargo update -p rand_distr --precise 0.4.3 || true
+          cargo generate-lockfile
 
       - name: Execute Full Suite (Unit, Fuzzing & High-Precision Performance)
         run: cargo test --release --all-targets
