@@ -39,6 +39,11 @@ criterion = { version = "0.5", features = ["async_tokio"] }
 default = []
 python-extension = ["pyo3"]
 
+# Override sub-dependencies to lock `rand` ecosystem to v0.8 / v0.4
+[patch.crates-io]
+rand = "=0.8.7"
+rand_distr = "=0.4.3"
+
 [[bin]]
 name = "directive_x"
 path = "src/main.rs"
