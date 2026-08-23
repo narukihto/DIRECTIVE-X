@@ -1,5 +1,6 @@
 use candle_core::{DType, Device, Result as CandleResult, Tensor};
-use candle_nn::{Linear, Module, VarBuilder, VarMap, SGD};
+// تم إضافة Optimizer هنا في السطر التالي ليفهم المترجم دالة new ودالة step
+use candle_nn::{Linear, Module, VarBuilder, VarMap, SGD, Optimizer}; 
 use log::info;
 
 /// شبكة عصبية رمزية منخفضة المستوى قائمة على Candle لمعالجة مصفوفات الأكواد
@@ -9,21 +10,21 @@ pub struct CandleNetwork {
     pub fc2: Linear,
     pub embedding_dim: usize,
     pub varmap: VarMap,
-    pub optimizer: SGD, // 1. إضافة المُحسن كعنصر أساسي في هيكل الشبكة
+    pub optimizer: SGD, 
 }
 
 impl CandleNetwork {
     /// بناء وتجهيز الطبقات العصبية والمصفوفات على المعالج أو البطاقة
     pub fn new(embedding_dim: usize, hidden_dim: usize) -> CandleResult<Self> {
-        let device = Device::Cpu; // يمكن تخصيصها لـ CUDA أو Metal عند توفرها
+        let device = Device::Cpu; 
         let varmap = VarMap::new();
         let vs = VarBuilder::from_varmap(&varmap, DType::F32, &device);
 
         let fc1 = candle_nn::linear(embedding_dim, hidden_dim, vs.pp("fc1"))?;
         let fc2 = candle_nn::linear(hidden_dim, embedding_dim, vs.pp("fc2"))?;
 
-        // 2. تهيئة مُحسن الـ SGD وربطه بمتغيرات الـ VarMap ومعدل تعلم (Learning Rate) مناسب
         let learning_rate = 0.01;
+        // الآن سيتعرف المترجم على دالة new بنجاح
         let optimizer = SGD::new(varmap.all_vars(), learning_rate)?;
 
         info!(
@@ -37,7 +38,7 @@ impl CandleNetwork {
             fc2,
             embedding_dim,
             varmap,
-            optimizer, // قفل كائن المحسن داخل الهيكل
+            optimizer, 
         })
     }
 
@@ -51,7 +52,6 @@ impl CandleNetwork {
 
     /// تنفيذ دورة تدريبية وحساب التدرجات وتحديث الأوزان (Active Training Epoch)
     pub fn train_epoch(&mut self) -> CandleResult<f32> {
-        // ملحوظة: في خطوة main.rs القادمة سنستبدل الـ dummy_data ببيانات الـ DataLoader الحية
         let dummy_data = vec![0.5f32; self.embedding_dim];
         let input = Tensor::from_slice(&dummy_data, (1, self.embedding_dim), &self.device)?;
         let target = Tensor::from_slice(&dummy_data, (1, self.embedding_dim), &self.device)?;
@@ -60,14 +60,13 @@ impl CandleNetwork {
         let diff = (output - target)?;
         let loss = diff.sqr()?.mean_all()?;
 
-        // 3. السحر الهندسي: تصفير التدرجات السابقة وحساب التدرجات العكسية الجديدة
         let loss_val = loss.to_scalar::<f32>()?;
         
         // حساب التراجع العكسي للتدرجات بناءً على قيمة الـ Loss
-        loss.backward()?; 
+        let grads = loss.backward()?; 
         
-        // خطوة التحديث الفعلي للأوزان داخل الـ safetensors
-        self.optimizer.step()?; 
+        // الآن سيتعرف المترجم على دالة step ويمرر التدرجات بنجاح لتحديث الأوزان
+        self.optimizer.step(&grads)?; 
 
         Ok(loss_val)
     }
