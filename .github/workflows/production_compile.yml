@@ -50,6 +50,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
+      - name: Lock Sub-Dependencies (Fix Rand v0.9 Mismatch)
+        run: |
+          cargo update -p rand --precise 0.8.7
+          cargo update -p rand_distr --precise 0.4.3
+
       - name: Execute Full Suite (Unit, Fuzzing & High-Precision Performance)
         run: cargo test --release --all-targets
 
