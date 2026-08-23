@@ -8,7 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: "-C opt-level=3 -C lto=fat -C target-cpu=native"
+  RUSTFLAGS: "-C opt-level=3 -C target-cpu=native"
 
 jobs:
   native-cross-compile:
