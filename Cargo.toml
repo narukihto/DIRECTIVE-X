@@ -46,6 +46,7 @@ path = "src/main.rs"
 [[bench]]
 name = "performance_bench"
 harness = false
+path = "tests/test_performance.rs"
 
 [profile.release]
 opt-level = 3
