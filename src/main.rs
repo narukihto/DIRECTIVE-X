@@ -14,7 +14,7 @@ mod ui;
 
 use crate::core::causal_system::{CausalCollapseSystem, QuantumNode};
 use crate::eye_os::rust_bus::RustBus;
-use crate::neural::candle_network::SovereignNeuralNetwork;
+use crate::neural::candle_network::CandleNetwork;
 use crate::ui::prompt_chunker::PromptChunker;
 
 #[tokio::main]
@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         info!("[CORE] Quantum Causal Collapse Route Solved: {:?}", collapse_route);
 
         // ب) تشغيل حلقة التدريب الكاملة والتهام البيانات عبر Candle Neural Engine
-        let mut neural_net = SovereignNeuralNetwork::new()?;
+        let mut neural_net = CandleNetwork::new()?;
         let total_epochs = 10;
         
         for epoch in 1..=total_epochs {
