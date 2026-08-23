@@ -19,6 +19,12 @@ pub struct TerminalGui {
     pub latency_ms: f64,
 }
 
+impl Default for TerminalGui {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TerminalGui {
     pub fn new() -> Self {
         Self {
@@ -62,7 +68,7 @@ impl TerminalGui {
                         .fg(Color::Cyan)
                         .add_modifier(Modifier::BOLD),
                 )
-                .block(Borders::all());
+                .block(Block::default().borders(Borders::ALL));
                 frame.render_widget(header, chunks[0]);
 
                 // 2. منطقة الإدخال والاستقبال للنصوص الضخمة
@@ -77,14 +83,14 @@ impl TerminalGui {
                 ))
                 .style(Style::default().fg(Color::White))
                 .block(
-                    Borders::all(),
+                    Block::default().borders(Borders::ALL),
                 )
                 .wrap(Wrap { trim: true });
                 frame.render_widget(main_content, chunks[1]);
 
                 // 3. مؤشر استقرار أداء محرك الانهيار السببي O(N)
                 let gauge = Gauge::default()
-                    .block(Borders::all())
+                    .block(Block::default().borders(Borders::ALL))
                     .gauge_style(Style::default().fg(Color::Green))
                     .percent(100)
                     .label("Causal Collapse Search Engine: 100% Deterministic (O(N) Active)");
