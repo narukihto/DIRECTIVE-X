@@ -19,14 +19,16 @@ num-traits = "0.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-# Explicit Pinning
-rand = "0.8.5"
-rand_distr = "0.4.3"
+# Explicit Pinning - Locking Random Ecosystem
+rand = "=0.8.5"
+rand_core = "=0.6.4"
+rand_chacha = "=0.3.1"
+rand_distr = "=0.4.3"
 
-# Neural Framework (Candle)
-candle-core = "0.6"
-candle-nn = "0.6"
-candle-transformers = "0.6"
+# Neural Framework (Candle 0.8.2)
+candle-core = "0.8.2"
+candle-nn = "0.8.2"
+candle-transformers = "0.8.2"
 
 # Python / Mojo Interop
 pyo3 = { version = "0.21", features = ["extension-module", "abi3-py310"], optional = true }
@@ -60,7 +62,3 @@ codegen-units = 1
 panic = "abort"
 strip = "symbols"
 overflow-checks = false
-
-# يجبر Cargo على توحيد rand عبر الشجرة كاملة ومنع استيراد 0.9
-[patch.crates-io]
-rand = { git = "https://github.com/rust-random/rand", tag = "0.8.5" }
