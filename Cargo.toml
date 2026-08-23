@@ -1,0 +1,56 @@
+[package]
+name = "directive_x_generator"
+version = "1.0.0"
+edition = "2021"
+authors = ["Sovereign Architect"]
+description = "Maximum Sovereign AI Code-Generator Compiler"
+
+[dependencies]
+# Async Runtime & Low-Latency Utilities
+tokio = { version = "1.38", features = ["full"] }
+bytes = "1.6"
+futures = "0.3"
+
+# Data Structure & Math Operations
+rayon = "1.10"
+num-bigint = "0.4"
+num-traits = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Neural Framework (Candle)
+candle-core = "0.6"
+candle-nn = "0.6"
+candle-transformers = "0.6"
+
+# Python / Mojo Interop
+pyo3 = { version = "0.21", features = ["extension-module", "abi3-py310"], optional = true }
+
+# Logging & CLI UI
+log = "0.4"
+env_logger = "0.11"
+ratatui = "0.26"
+crossterm = "0.27"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["async_tokio"] }
+
+[features]
+default = []
+python-extension = ["pyo3"]
+
+[[bin]]
+name = "directive_x"
+path = "src/main.rs"
+
+[[bench]]
+name = "performance_bench"
+harness = false
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
+overflow-checks = false
