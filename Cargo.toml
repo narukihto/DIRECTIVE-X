@@ -19,8 +19,8 @@ num-traits = "0.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-# Explicitly Pin rand to 0.8 to force resolution across the tree
-rand = "=0.8.7"
+# Explicit Pin to rand 0.8.5 for exact Candle 0.6 trait alignment
+rand = "=0.8.5"
 rand_distr = "=0.4.3"
 
 # Neural Framework (Candle)
