@@ -19,9 +19,9 @@ num-traits = "0.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-# Explicit Pin to rand 0.8.5 for exact Candle 0.6 trait alignment
-rand = "=0.8.5"
-rand_distr = "=0.4.3"
+# Explicit Pinning
+rand = "0.8.5"
+rand_distr = "0.4.3"
 
 # Neural Framework (Candle)
 candle-core = "0.6"
@@ -60,3 +60,7 @@ codegen-units = 1
 panic = "abort"
 strip = "symbols"
 overflow-checks = false
+
+# يجبر Cargo على توحيد rand عبر الشجرة كاملة ومنع استيراد 0.9
+[patch.crates-io]
+rand = { git = "https://github.com/rust-random/rand", tag = "0.8.5" }
