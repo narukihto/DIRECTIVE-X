@@ -22,9 +22,9 @@ checksum = "a118f3a7dcfb923ac3528b6d85ebbe977c3ddf3219ee54b7fb2eb5b95cd45353"
 
 [[package]]
 name = "candle-core"
-version = "0.6.0"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "113dd11ebfbfa08f1b62fbf8ebca28b031c26b5c3b52f10b784381ffbf38e78a"
+checksum = "754db1250f24ee41fa86f50b44b823e5361099e2a5edb4e13880a498dc711df7"
 dependencies = [
  "half",
  "num-traits",
@@ -36,9 +36,9 @@ dependencies = [
 
 [[package]]
 name = "candle-nn"
-version = "0.6.0"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4cbb38d38bf0304a08bc7958b4bcf932375efeb3e96be95e5d3ca2ebca8234a"
+checksum = "3e66bb9a444aa16d80dff0aeb1caae86c476722d37c86a6448e8e7ed30d322ff"
 dependencies = [
  "candle-core",
  "num-traits",
@@ -47,9 +47,9 @@ dependencies = [
 
 [[package]]
 name = "candle-transformers"
-version = "0.6.0"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69e5d444747bcf5f745772393850125bb7fbba453be1bfce2d1fa3c92ce94f1e"
+checksum = "2f6a6b8ffcfd8b3d68efeeea964dfb4c48ca620b7ee8edbb3ad596fb63fcf138"
 dependencies = [
  "candle-core",
  "candle-nn",
