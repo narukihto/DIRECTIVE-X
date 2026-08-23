@@ -44,8 +44,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let collapse_route = causal_engine.execute_collapse();
         info!("[CORE] Quantum Causal Collapse Route Solved: {:?}", collapse_route);
 
-        // ب) تشغيل حلقة التدريب الكاملة والتهام البيانات عبر Candle Neural Engine
-        let mut neural_net = CandleNetwork::new()?;
+        // ب) تشغيل حلقة التدريب الكاملة عبر Candle Network (أبعاد المتجهات: 512, المخفية: 256)
+        let mut neural_net = CandleNetwork::new(512, 256)?;
         let total_epochs = 10;
         
         for epoch in 1..=total_epochs {
@@ -53,9 +53,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             info!("🔥 [NEURAL ENGINE] Epoch {}/{} Complete. Loss: {:.6}", epoch, total_epochs, training_loss);
         }
 
-        // ج) تصدير الأوزان النهائية الجاهزة تماماً للاستخدام الإندماجي
-        fs::write("model_weights.safetensors", b"DIRECTIVE_X_FULLY_TRAINED_SOVEREIGN_WEIGHTS_V1")?;
-        info!("💾 [PRODUCT READY] Model fully trained and exported -> 'model_weights.safetensors'");
+        // ج) تصدير الأوزان النهائية
+        neural_net.varmap.save("model_weights.safetensors")?;
+        info!("💾 [PRODUCT READY] Model weights fully saved -> 'model_weights.safetensors'");
         
         println!("------------------------------------------------------------");
         println!("   FULL TRAINING PIPELINE COMPLETE: WEIGHTS & MODEL SAVED   ");
