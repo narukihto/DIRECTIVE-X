@@ -71,22 +71,21 @@ jobs:
       - name: Build Atomic Chat Compatible GGUF (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          pip install safetensors numpy torch gguf sentencepiece tokenizers --no-cache-dir
+          pip install safetensors numpy torch gguf sentencepiece tokenizers transformers --no-cache-dir
           git clone https://github.com/ggerganov/llama.cpp.git --depth 1
           
           python -c "
           import json, os
           from tokenizers import Tokenizer, models
 
-          # 1. ضبط المعلمات بناءً على أبعاد شبكة Candle الفعلية (Dim: 512, Hidden: 256)
           config = {
               'architectures': ['LlamaForCausalLM'],
               'bos_token_id': 1,
               'eos_token_id': 2,
               'hidden_act': 'silu',
-              'hidden_size': 512,          # مطابق لـ Dim الخاص بالشبكة
+              'hidden_size': 512,
               'initializer_range': 0.02,
-              'intermediate_size': 256,   # مطابق لـ Hidden الخاص بالشبكة
+              'intermediate_size': 256,
               'max_position_embeddings': 2048,
               'model_type': 'llama',
               'num_attention_heads': 8,
@@ -99,7 +98,6 @@ jobs:
           with open('config.json', 'w') as f:
               json.dump(config, f, indent=2)
 
-          # 2. توليد tokenizer.json لتلبية متطلبات التحويل
           tok = Tokenizer(models.BPE())
           tok.save('tokenizer.json')
           "
