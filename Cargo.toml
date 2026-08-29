@@ -6,13 +6,18 @@ authors = ["Sovereign Architect"]
 description = "Maximum Sovereign AI Code-Generator Compiler"
 autotests = false
 
+# --- [إحكام إغلاق المعمارية: إعلان جذع المكتبة لإبادة خطأ مسارات الاختبارات E0433 للأبد] ---
+[lib]
+path = "src/main.rs"
+# ---------------------------------------------------------------------------------------
+
 [dependencies]
 # Async Runtime & Low-Latency Utilities
 tokio = { version = "1.38", features = ["full"] }
 bytes = "1.6"
 futures = "0.3"
 
-# Secure Network Connection & Streaming Engine (تمت إضافتها لتأمين جلب البيانات الحية)
+# Secure Network Connection & Streaming Engine (تأمين جلب تدفق البيانات الحية عبر الشبكة)
 reqwest = { version = "0.11", features = ["json", "stream", "rustls-tls"], default-features = false }
 
 # Data Structure & Math Operations
