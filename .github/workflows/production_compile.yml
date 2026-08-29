@@ -63,7 +63,7 @@ jobs:
       - name: Ingest Data Context & Train AI Model In-Memory
         run: cargo run --release --target ${{ matrix.target }} -- --train
 
-      # --- [توجيه الجهد الصافي: تحويل وتجهيز ملف الـ GGUF للهاتف] ---
+      # --- [توجيه الجهد الصافي: تحويل وتجهيز ملف الـ GGUF للهاتف بـ "صفر اعتمادات خارجية"] ---
       - name: Install Python & GGUF Conversion Tooling (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
         uses: actions/setup-python@v5
@@ -74,11 +74,28 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           pip install gguf safetensors numpy torch --no-cache-dir
-          # تصحيح الرابط الكامل لـ الـ Raw GitHub لضمان سحب السكربت بنجاح
-          curl -L -o convert_hf_to_gguf.py https://githubusercontent.com
-          mkdir -p ./hf_model_format
-          cp model_weights.safetensors ./hf_model_format/
-          python convert_hf_to_gguf.py ./hf_model_format/ --outtype f16 --output directive_x.gguf
+          
+          # كتابة سكربت تحويل فوري ومستقل محلياً عبر البايثون دون استخدام curl نهائياً
+          python -c "
+          import os
+          from gguf import GGUFWriter
+          from safetensors.torch import load_file
+          
+          print('[+] Local Sovereign conversion engine started...')
+          weights = load_file('model_weights.safetensors')
+          writer = GGUFWriter('directive_x.gguf', 'directive_x')
+          
+          for name, tensor in weights.items():
+              # تحويل البيانات إلى دقة نصف عائمة f16 المتوافقة مع معالجات الهواتف
+              arr = tensor.detach().cpu().numpy().astype('float16')
+              writer.add_tensor(name, arr)
+              
+          writer.write_header_to_file()
+          writer.write_kv_data_to_file()
+          writer.write_tensors_to_file()
+          writer.close()
+          print('[✓] GGUF conversion successful and محصن.')
+          "
 
       - name: Upload Sovereign GGUF Artifact for Mobile (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
