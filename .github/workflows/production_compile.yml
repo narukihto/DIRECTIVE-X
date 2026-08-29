@@ -62,7 +62,7 @@ jobs:
       - name: Ingest Data Context & Train AI Model In-Memory
         run: cargo run --release --target ${{ matrix.target }} -- --train
 
-      - name: Install Python & Native GGUF Library (Ubuntu Only)
+      - name: Install Python & GGUF Builder (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
         uses: actions/setup-python@v5
         with:
@@ -78,13 +78,10 @@ jobs:
           import numpy as np
           from safetensors.torch import load_file
 
-          # 1. قراءة أوزان Candle المستخرجة مباشرة
           weights = load_file('model_weights.safetensors')
 
-          # 2. إنشاء كاتب GGUF وتحديد معالم المعمارية المباشرة
           writer = gguf.GGUFWriter('directive_x.gguf', 'llama')
 
-          # إضافة الهيدر المخصص متوافق مع Atomic Chat
           writer.add_architecture()
           writer.add_context_length(2048)
           writer.add_embedding_length(512)
@@ -95,7 +92,6 @@ jobs:
           writer.add_layer_norm_rms_eps(1e-5)
           writer.add_file_type(gguf.GGMLQuantizationType.F16)
 
-          # 3. تعيين وإدراج المصفوفات المباشرة إلى الهيكل المتوافق مع GGUF
           tensor_map = {
               'fc1.weight': 'blk.0.ffn_gate.weight',
               'fc1.bias': 'blk.0.ffn_gate.bias',
@@ -112,7 +108,7 @@ jobs:
           writer.write_kv_data_to_file()
           writer.write_tensors_to_file()
           writer.close()
-          print('Successfully built directive_x.gguf via GGUF SDK!')
+          print('directive_x.gguf built successfully!')
           "
 
       - name: Upload Sovereign GGUF Artifact for Mobile (Ubuntu Only)
