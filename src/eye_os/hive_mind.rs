@@ -85,9 +85,23 @@ impl HiveMind {
             );
 
             let raw_bytes = payload.as_bytes();
-            
-            // استدعاء حقيقي للاستدلال وتعديل المصفوفة العصبية بالاستعارة المتغيرة المصححة
-            let inference_loss = neural_net.train_epoch()
+
+            // تحويل الحمولة إلى توكنز حقيقية للتوافق مع CandleNetwork المحسّنة
+            let sample_input: Vec<u32> = raw_bytes
+                .iter()
+                .map(|&b| (b as u32) % (neural_net.vocab_size as u32))
+                .collect();
+
+            if sample_input.is_empty() {
+                return Err("Payload tokenized into empty stream.".to_string());
+            }
+
+            let input_slice = &sample_input[..sample_input.len().min(16)];
+            let target_slice = input_slice; // مطابقة التوكن الملاحظ كمخرج للاستدلال
+
+            // استدعاء حقيقي للـ train_step بعد تحديث التوقيع
+            let inference_loss = neural_net
+                .train_step(input_slice, target_slice)
                 .map_err(|e| format!("[NEURAL FAIL] Agent failed tensor pass: {:?}", e))?;
 
             info!(
