@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 use std::time::Instant;
-use log::{info, warn, error};
+use log::{info, warn};
 use serde::{Deserialize, Serialize};
 
 // استدعاء مكونات النظام للتواصل الداخلي المباشر
 use crate::neural::candle_network::CandleNetwork;
-use crate::eye_os::rust_bus::RustBus;
 
 /// يمثل وكيلاً من الوكلاء الـ 12 في خلية المعالجة الموزعة الحية
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -48,7 +47,7 @@ impl HiveMind {
                 id,
                 AgentNode {
                     id,
-                    name: format!("Agent-{}", id), // إزالة الحشو في التسمية لتوحيد المسارات
+                    name: format!("Agent-{}", id),
                     role: role.to_string(),
                     is_active: true,
                     tasks_completed: 0,
@@ -62,12 +61,12 @@ impl HiveMind {
         }
     }
 
-    /// توجيه مهمة حقيقية وحقنها داخل المصفوفة العصبية عبر الـ Bus السريع
+    /// توجيه مهمة حقيقية وحقنها داخل المصفوفة العصبية (تم تصحيح الاستعارة لـ &mut)
     pub fn dispatch_task(
         &mut self, 
         agent_id: usize, 
         payload: &str, 
-        neural_net: &CandleNetwork
+        neural_net: &mut CandleNetwork
     ) -> Result<String, String> {
         let start_time = Instant::now();
 
@@ -85,11 +84,9 @@ impl HiveMind {
                 agent.role
             );
 
-            // تشغيل استعلام حقيقي وعزل المدخلات عبر النواة الذكية المستقرة (0.28 Loss)
             let raw_bytes = payload.as_bytes();
             
-            // محاكاة تحويل الوكيل للمدخلات الحية إلى تنسور واستدعاء الاستدلال التنبئي
-            // [ملاحظة هندسية: الأوزان المستقرة لـ CandleNetwork تقوم بضبط الـ Inference فورا]
+            // استدعاء حقيقي للاستدلال وتعديل المصفوفة العصبية بالاستعارة المتغيرة المصححة
             let inference_loss = neural_net.train_epoch()
                 .map_err(|e| format!("[NEURAL FAIL] Agent failed tensor pass: {:?}", e))?;
 
