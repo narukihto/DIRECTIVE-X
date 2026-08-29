@@ -82,7 +82,6 @@ jobs:
 
           writer = gguf.GGUFWriter('directive_x.gguf', 'llama')
 
-          writer.add_architecture()
           writer.add_context_length(2048)
           writer.add_embedding_length(512)
           writer.add_block_count(1)
