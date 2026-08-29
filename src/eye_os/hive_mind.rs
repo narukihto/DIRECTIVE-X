@@ -3,8 +3,8 @@ use std::time::Instant;
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
 
-// استدعاء مكونات النظام للتواصل الداخلي المباشر
-use crate::neural::candle_network::CandleNetwork;
+// تصحيح مسار الاستدعاء إلى مسار نسبي هيكلي لعزل ثغرة الـ Integration Tests وإبادة خطأ E0433
+use super::super::neural::candle_network::CandleNetwork;
 
 /// يمثل وكيلاً من الوكلاء الـ 12 في خلية المعالجة الموزعة الحية
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -61,7 +61,7 @@ impl HiveMind {
         }
     }
 
-    /// توجيه مهمة حقيقية وحقنها داخل المصفوفة العصبية (تم تصحيح الاستعارة لـ &mut)
+    /// توجيه مهمة حقيقية وحقنها داخل المصفوفة العصبية بالاستعارة المتغيرة المحمية
     pub fn dispatch_task(
         &mut self, 
         agent_id: usize, 
