@@ -106,9 +106,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
-    // إيقاظ وتفعيل شبكة الاستدلال للـ Candle Network لخدمة الوكلاء الـ 12
+    // إيقاظ وتفعيل شبكة الاستدلال للـ Candle Network لخدمة الوكلاء الـ 12 (تم إحكام الـ mut)
     info!("[SYSTEM] Loading Neural Inversion Matrix for Core Inference Pass...");
-    let runtime_neural_net = CandleNetwork::new(512, 256)?;
+    let mut runtime_neural_net = CandleNetwork::new(512, 256)?;
 
     // إيقاظ وتفعيل خلية الوكلاء الـ 12 (HiveMind) بجاهزية تامة
     info!("[SYSTEM] Awakening the 12-Agent Swarm Orchestrator...");
@@ -136,12 +136,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let processed_chunks = chunker.process_all_chunks();
     info!("[UI] Successfully processed {} input chunks without context drops.", processed_chunks.len());
 
-    // توجيه واختبار حمولة المهام التنفيذية الكبرى عبر العقل الجماعي (تم سحق الـ Warnings والتعطيل بنجاح)
+    // توجيه واختبار حمولة المهام التنفيذية الكبرى عبر العقل الجماعي (تم تمرير الاستعارة المتغيرة بنجاح وبدون تشتت)
     info!("[HIVE MIND] Initiating Sovereign Agent Verification Dispatch...");
     let test_payload = "COMPILER_DIRECTIVE_EVM_ARBITRAGE_CORE_DECOUPLE";
     
-    // تمرير النواة المستقرة الحقيقية للوكيل رقم 6 (Rust/Mojo Compiler) ليقوم بحسابه
-    match hive_mind.dispatch_task(6, test_payload, &runtime_neural_net) {
+    match hive_mind.dispatch_task(6, test_payload, &mut runtime_neural_net) {
         Ok(res) => info!("[SWARM RESPONSE] {}", res),
         Err(e) => error!("[SWARM FAIL] Swarm orchestrator bottleneck detected: {}", e)
     }
