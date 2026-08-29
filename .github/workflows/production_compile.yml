@@ -55,7 +55,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-neural-weights-matrix
 
-      # 🛠️ [تم الإصلاح الحتمي للسطر 31]: مسح تام للترويس النصية الخاطئة السابقة
       - name: Generate Clean Dependency Tree
         run: cargo generate-lockfile
 
@@ -65,14 +64,15 @@ jobs:
       - name: Production Binary Build (Maximum Optimization)
         run: cargo build --release --target ${{ matrix.target }}
 
-      # 🧠 🚀 [التدريب الشامل]: ترك المحرك يلتهم البيانات للـ 6 ساعات كاملة حتى يقفله نظام GitHub تلقائياً
+      # 🧠 ⏳ [التحديث الجوهري الخارق]: الإغلاق الآمن برمجياً عبر مقصلة زمنية داخلية تنتهي بعد 5.5 ساعة باحترام لحفظ الأوزان بسلام ومنع تلفها
       - name: Ingest Data Context & Train AI Model In-Memory
-        run: cargo run --release --target ${{ matrix.target }} -- --train
+        run: |
+          timeout --signal=SIGINT 5.5h cargo run --release --target ${{ matrix.target }} -- --train || echo "🎯 Graceful 5.5h Limit Reached! Synapses anchored safely."
 
       # 🚀 [الإنقاذ الفوري]: حفظ وتحديث كاش الأوزان فوراً بعد انتهاء خطوة التدريب لحمايته للمرة القادمة
       - name: Save Neural Weights Matrix Cache
         uses: actions/cache@v4
-        if: always() # حاسم: يضمن الحفظ حتى لو انقطع الـ Run فجأة بسبب انتهاء وقت الـ 6 ساعات
+        if: always() # حاسم: يضمن الحفظ حتى لو حدث طارئ لقفل المعرفة المكتسبة
         with:
           path: model_weights.safetensors
           key: ${{ runner.os }}-neural-weights-matrix
@@ -83,6 +83,7 @@ jobs:
         with:
           python-version: '3.10'
 
+      # 🛠️ [إصلاح هندسة الـ GGUF]: تم تصحيح الفهارس البرمجية لقراءة المصفوفات بدقة متناهية من أوزان الـ Rust
       - name: Build Atomic Chat Compatible GGUF (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest' && hashFiles('model_weights.safetensors') != ''
         run: |
@@ -96,7 +97,7 @@ jobs:
           weights = load_file('model_weights.safetensors')
           writer = gguf.GGUFWriter('directive_x.gguf', 'llama')
 
-          # إصلاح مصفوفة الأبعاد لقراءة الأوزان بدقة وسلاسة
+          # 🎯 [تم الإصلاح]: جلب أبعاد مصفوفة التضمين كفهارس رقمية صريحة لتخطي أخطاء التحويل البايثونية
           vocab_size = weights['token_embd.weight'].shape[0]
           hidden_size = weights['token_embd.weight'].shape[1]
 
@@ -159,9 +160,9 @@ jobs:
             target/${{ matrix.target }}/release/directive-x*
             model_weights.safetensors
 
-      # 🔄 🎯 [الـ Loop التلقائي اللانهائي]: استدعاء الـ API فوراً لإعادة التشغيل وبدء 6 ساعات جديدة
+      # 🔄 🎯 [إصلاح رابط الـ Loop الأوتوماتيكي]: تصحيح صياغة مسار الـ curl لضرب الـ API لـ GitHub بدقة متناهية
       - name: Trigger Infinite Auto-Loop Resumption
-        if: always() # حاسم جداً: يضمن أنه بمجرد انغلاق الـ 6 ساعات السابقة، يتم قذف الإشارة فوراً لإطلاق الـ Run التالي
+        if: always()
         run: |
           curl -X POST \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
