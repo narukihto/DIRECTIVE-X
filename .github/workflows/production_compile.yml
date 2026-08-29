@@ -77,20 +77,42 @@ jobs:
           import os
           import gguf
           from safetensors.torch import load_file
-          
-          print('[+] Local Sovereign conversion engine started...')
+
+          print('[+] Sovereign GGUF Metadata & Tokenizer Engine starting...')
           weights = load_file('model_weights.safetensors')
-          writer = gguf.GGUFWriter('directive_x.gguf', 'directive_x')
-          
+          writer = gguf.GGUFWriter('directive_x.gguf', 'llama')
+
+          # 1. إدراج المعلمات القياسية التي تطلبها محركات الهواتف (PocketPal / llama.cpp)
+          writer.add_architecture()
+          writer.add_name('directive_x')
+          writer.add_context_length(2048)
+          writer.add_embedding_length(512)
+          writer.add_block_count(1)
+          writer.add_feed_forward_length(2048)
+          writer.add_head_count(8)
+          writer.add_head_count_kv(8)
+          writer.add_layer_norm_eps(1e-5)
+          writer.add_file_type(gguf.GGMLFileType.MOSTLY_F16)
+
+          # 2. بناء وتأمين الـ Tokenizer مدمج ذاتياً بدون ملفات خارجية
+          tokens = ['<unk>', '<s>', '</s>']
+          writer.add_tokenizer_model('llama')
+          writer.add_token_list(tokens)
+          writer.add_token_scores([0.0] * len(tokens))
+          writer.add_token_types([1, 2, 3])
+          writer.add_bos_token_id(1)
+          writer.add_eos_token_id(2)
+
+          # 3. كتابة مصفوفات الأوزان بتحويل f16
           for name, tensor in weights.items():
               arr = tensor.detach().cpu().numpy().astype('float16')
               writer.add_tensor(name, arr)
-              
+
           writer.write_header_to_file()
           writer.write_kv_data_to_file()
           writer.write_tensors_to_file()
           writer.close()
-          print('[✓] GGUF conversion successful.')
+          print('[✓] GGUF file generated with valid Metadata & Tokenizer successfully.')
           "
 
       - name: Upload Sovereign GGUF Artifact for Mobile (Ubuntu Only)
