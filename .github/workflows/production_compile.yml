@@ -1,4 +1,4 @@
-name: DIRECTIVE-X Production Cross-Platform Build & Verification
+Name: DIRECTIVE-X Production Cross-Platform Build & Verification
 
 on:
   push:
@@ -51,10 +51,9 @@ jobs:
             ${{ runner.os }}-cargo-v2-
 
       - name: Generate Clean Dependency Tree
-        run: |
-          cargo generate-lockfile
+        run: cargo generate-lockfile
 
-            - name: Execute Full Suite (Unit, Fuzzing & High-Precision Performance)
+      - name: Execute Full Suite (Unit, Fuzzing & High-Precision Performance)
         run: cargo test --release --bin directive_x
 
       - name: Production Binary Build (Maximum Optimization)
@@ -63,7 +62,7 @@ jobs:
       - name: Ingest Data Context & Train AI Model In-Memory
         run: cargo run --release --target ${{ matrix.target }} -- --train
 
-      # --- [توجيه الجهد الصافي: تحويل وتجهيز ملف الـ GGUF للهاتف بـ "صفر اعتمادات خارجية"] ---
+      # --- [تحويل وتجهيز ملف الـ GGUF للهاتف] ---
       - name: Install Python & GGUF Conversion Tooling (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
         uses: actions/setup-python@v5
@@ -75,7 +74,6 @@ jobs:
         run: |
           pip install gguf safetensors numpy torch --no-cache-dir
           
-          # كتابة سكربت تحويل فوري ومستقل محلياً عبر البايثون دون استخدام curl نهائياً
           python -c "
           import os
           from gguf import GGUFWriter
@@ -86,7 +84,6 @@ jobs:
           writer = GGUFWriter('directive_x.gguf', 'directive_x')
           
           for name, tensor in weights.items():
-              # تحويل البيانات إلى دقة نصف عائمة f16 المتوافقة مع معالجات الهواتف
               arr = tensor.detach().cpu().numpy().astype('float16')
               writer.add_tensor(name, arr)
               
@@ -94,7 +91,7 @@ jobs:
           writer.write_kv_data_to_file()
           writer.write_tensors_to_file()
           writer.close()
-          print('[✓] GGUF conversion successful and محصن.')
+          print('[✓] GGUF conversion successful.')
           "
 
       - name: Upload Sovereign GGUF Artifact for Mobile (Ubuntu Only)
@@ -104,7 +101,6 @@ jobs:
           name: directive-x-android-ios-gguf
           path: directive_x.gguf
 
-      # --- [رفع الملفات والـ Binaries الأصلية كالمعتاد] ---
       - name: Upload Compiled Binary & Trained Weights Artifact
         uses: actions/upload-artifact@v4
         with:
