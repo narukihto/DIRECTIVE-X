@@ -3,10 +3,8 @@ use std::time::Instant;
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
 
-// استخدام الحيلة البرمجية لنطاقات الملفات التشاركية الموحدة لتخطي عزل الـ Binary Tests
-#[path = "../neural/candle_network.rs"]
-pub mod candle_network_fallback;
-use candle_network_fallback::CandleNetwork;
+// استدعاء النواة العصبية الرسمية للتطبيق لتطابق الأنواع 100% في الـ main
+use crate::neural::candle_network::CandleNetwork;
 
 /// يمثل وكيلاً من الوكلاء الـ 12 في خلية المعالجة الموزعة الحية
 #[derive(Debug, Clone, Serialize, Deserialize)]
