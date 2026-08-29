@@ -6,11 +6,6 @@ authors = ["Sovereign Architect"]
 description = "Maximum Sovereign AI Code-Generator Compiler"
 autotests = false
 
-# --- [إحكام إغلاق المعمارية: إعلان جذع المكتبة لإبادة خطأ مسارات الاختبارات E0433 للأبد] ---
-[lib]
-path = "src/main.rs"
-# ---------------------------------------------------------------------------------------
-
 [dependencies]
 # Async Runtime & Low-Latency Utilities
 tokio = { version = "1.38", features = ["full"] }
