@@ -13,6 +13,7 @@ pub mod neural;
 pub mod ui;
 pub mod data_loader;
 
+// استيراد آليات المحرك الحتمي لقفل الأبعاد كوانتياً
 use crate::core::causal_system::{CausalCollapseSystem, QuantumNode};
 use crate::eye_os::rust_bus::RustBus;
 use crate::eye_os::hive_mind::HiveMind;
@@ -43,81 +44,82 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if args.contains(&"--train".to_string()) {
         info!("🧠 [MULTIPLE INGESTION MODE] Awakening All Core Knowledge Reservoirs...");
 
-        // أ) تشغيل محرك الانهيار السببي الحتمي الموحد
-        let initial_nodes = vec![
-            QuantumNode { id: 0, energy_scale: BigUint::from(1000000u32), frequency: 144.0 },
-            QuantumNode { id: 1, energy_scale: BigUint::from(500000u32), frequency: 89.0 },
-            QuantumNode { id: 2, energy_scale: BigUint::from(250000u32), frequency: 55.0 },
-        ];
-        let causal_engine = CausalCollapseSystem::new(initial_nodes);
-        let collapse_route = causal_engine.execute_collapse();
-        info!("[CORE] Quantum Causal Collapse Route Solved: {:?}", collapse_route);
-
-        // ب) تهيئة الشبكة العصبية الرمزية الحتمية مع طبقات Embedding و Output الشاملة
+        // أ) تهيئة الشبكة العصبية الرمزية الحتمية
         let mut neural_net = CandleNetwork::new(vocab_size, embedding_dim, hidden_dim)?;
         let total_epochs = 10;
 
-        // ج) تعريف مصفوفة الأهداف الكبرى لابتلاع لغات البشر والبرمجيات معاً
+        // ب) تعريف مصفوفة الأهداف الكبرى
         let targets = vec![
-            DatasetTarget::AyaDataset,   // النواة اللغوية ومتعددة اللغات
-            DatasetTarget::CodeXGLUE,    // بنية فهم وترجمة الأكواد
-            DatasetTarget::TheStackV2,   // مستودع الأكواد السيادية الفائق
-            DatasetTarget::ShareGPT,     // منطق المحادثات والتفكير المسترسل
+            DatasetTarget::AyaDataset,
+            DatasetTarget::CodeXGLUE,
+            DatasetTarget::TheStackV2,
+            DatasetTarget::ShareGPT,
         ];
 
-        // د) حلقة التدريب الشاملة - بث كافة مجموعات البيانات الحقيقية وتوليد التوكنز الحقيقية
+        // ج) حلقة التدريب الشاملة عبر التلقيم والفلترة الكوانتية المتتالية
         for target in targets {
-            info!("🚀 [INGESTION] Opening Hub Pipeline Channel for: {}", target.as_str());
+            let loader = DataLoader::new(target.clone(), 64 * 1024 * 1024);
+            let shards = target.get_target_shards();
 
-            // تهيئة الـ Loader بـ سعة تخزينية تبلغ 2 ميجابايت للكتلة الواحدة لحماية الذاكرة
-            let loader = DataLoader::new(target, 2 * 1024 * 1024);
+            for shard in shards {
+                match loader.download_shard_from_hub(&shard).await {
+                    Ok(local_file_path) => {
+                        if let Ok(raw_file_bytes) = loader.mmap_pass_to_tensor_core(&local_file_path) {
+                            
+                            info!("⚡ [QUANTUM MASK] Injecting Causal Collapse System for Dimensional Locking...");
+                            
+                            // 🧠 تحويل كتل البايتات الحية (حتى 100,000 عقدة متزامنة) لقفل أبعادها عبر محركك
+                            let quantum_nodes: Vec<QuantumNode> = raw_file_bytes.iter().take(100000).enumerate()
+                                .map(|(idx, &byte)| QuantumNode {
+                                    id: idx,
+                                    energy_scale: BigUint::from(byte),
+                                    frequency: byte as f64 * 1.44, // معامل رنين ترددي حتمي
+                                })
+                                .collect();
 
-            // 1. استدعاء آلية التحميل الرسمية والمستقرة لحفظ الملف الخام على القرص
-            match loader.download_from_hub().await {
-                Ok(local_file_path) => {
-                    // 2. سكب بايتات الملف الكامل مباشرة عبر أنبوب Memory-Mapped IO المدمج بمشروعك
-                    match loader.mmap_pass_to_tensor_core(&local_file_path) {
-                        Ok(raw_file_bytes) => {
-                            // تحويل بايتات الملف الصافي بالكامل رياضياً وضمن نطاق القاموس
-                            let tokens: Vec<u32> = raw_file_bytes
-                                .iter()
-                                .map(|&b| (b as u32) % (vocab_size as u32))
+                            let causal_engine = CausalCollapseSystem::new(quantum_nodes);
+                            let collapse_route = causal_engine.execute_collapse(); // قفل الأبعاد الحتمي واستخراج الفهرس الصالح
+                            
+                            info!("[CORE] Quantum Dim-Lock Completed. Active Symmetrical Node Path Size: {}", collapse_route.len());
+
+                            // تصفية تيار البايتات بالكامل وتحويل العناصر النظيفة المتوافقة ترددياً فقط إلى توكنز
+                            let tokens: Vec<u32> = raw_file_bytes.iter().enumerate()
+                                .filter(|(idx, _)| collapse_route.contains(idx)) // مقصلة إسقاط الضوضاء والرموز الشاذة
+                                .map(|(_, &b)| (b as u32) % (vocab_size as u32))
                                 .collect();
 
                             let total_tokens = tokens.len();
-                            let chunk_size = 16; // حجم نافذة السياق لخطوة التدريب الواحدة
+                            let chunk_size = 16; // نافذة السياق التدريبية للزحف المتتالي
 
-                            info!("[NEURAL ENGINE] Ingested {} tokens. Commencing sliding-window sequence loop...", total_tokens);
+                            if total_tokens > chunk_size {
+                                info!("[NEURAL ENGINE] Commencing sliding-window train pass on locked data. Tokens: {}", total_tokens);
+                                let mut offset = 0;
+                                while offset + chunk_size < total_tokens {
+                                    let input_tokens = &tokens[offset..offset + chunk_size];
+                                    let target_tokens = &tokens[offset + 1..=offset + chunk_size];
 
-                            // 3. 🔄 حلقة التدوير المتتالية (Sliding-Window Loop) للمرور على كامل محتوى الملف صعوداً
-                            let mut offset = 0;
-                            while offset + chunk_size < total_tokens {
-                                let input_tokens = &tokens[offset..offset + chunk_size];
-                                let target_tokens = &tokens[offset + 1..=offset + chunk_size];
-
-                                for epoch in 1..=total_epochs {
-                                    let training_loss = neural_net.train_step(input_tokens, target_tokens)?;
-                                    
-                                    // تسجيل الملاحظات دورياً كل 5000 خطوة لتجنب ملء سجلات الـ Workflow نصوصاً
-                                    if offset % 5000 == 0 && epoch == total_epochs {
-                                        info!("🔥 [NEURAL ENGINE] [{}] Position: {}/{}. Loss: {:.6}", 
-                                            loader.target.as_str(), offset, total_tokens, training_loss);
+                                    for epoch in 1..=total_epochs {
+                                        let training_loss = neural_net.train_step(input_tokens, target_tokens)?;
+                                        
+                                        // تسجيل الملاحظات دورياً كل 25,000 خطوة لحماية السجلات داخل الـ Workflow
+                                        if offset % 25000 == 0 && epoch == total_epochs {
+                                            info!("🔥 [NEURAL ENGINE] [{}] Pos: {}/{}. Shard Loss: {:.6}", 
+                                                loader.target.as_str(), offset, total_tokens, training_loss);
+                                        }
                                     }
+                                    offset += chunk_size;
                                 }
-                                // الزحف للأمام بمسافة حجم النافذة لتلقيم التتابع التالي للشبكة
-                                offset += chunk_size;
                             }
-                        },
-                        Err(e) => error!("[MMAP ERROR] Failed to map local file to core framework: {}", e),
-                    }
-                },
-                Err(e) => {
-                    error!("[INGESTION ERROR] Skipped target {}: {}", loader.target.as_str(), e);
+                        }
+                        // تفريغ القرص الصلب فوراً لتحرير المساحة داخل خادم الـ Runner للـ Shard التالي
+                        let _ = fs::remove_file(&local_file_path);
+                    },
+                    Err(e) => error!("[INGESTION ERROR] Skipped shard {}: {}", shard, e),
                 }
             }
         }
 
-        // هـ) تصدير الأوزان الشاملة (شاملة token_embd و fc1 و fc2 و output)
+        // هـ) تصدير الأوزان السيادية النهائية الناتجة عن تصفية وقفل الأبعاد كوانتياً
         neural_net.save_weights("model_weights.safetensors")?;
         info!("💾 [PRODUCT READY] Model weights fully saved -> 'model_weights.safetensors'");
 
