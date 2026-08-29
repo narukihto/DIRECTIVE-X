@@ -1,9 +1,11 @@
 use std::fs::File;
 use std::io::{Read, Result as IoResult};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use bytes::Bytes;
 use log::{info, warn};
 use rayon::prelude::*;
+// استيراد المكتبة الرسمية التي تم تأمينها في الـ Cargo.toml
+use hf_hub::{api::tokio::Api, Repo, RepoType};
 
 /// المجموعات البرمجية واللغوية المستهدفة للجلب المباشر والحقيقي
 #[derive(Debug, Clone)]
@@ -24,13 +26,13 @@ impl DatasetTarget {
         }
     }
 
-    /// روابط البث المباشر الموثوقة للملفات الخام على Hugging Face Hub لابتلاع المعرفة الحقيقية
-    pub fn as_live_url(&self) -> &'static str {
+    /// 📦 تحديد المسارات الداخلية الصافية والدقيقة للملفات الخام داخل المستودعات
+    pub fn as_file_name(&self) -> &'static str {
         match self {
-            DatasetTarget::AyaDataset => "https://huggingface.co",
-            DatasetTarget::CodeXGLUE => "https://huggingface.co",
-            DatasetTarget::TheStackV2 => "https://huggingface.co",
-            DatasetTarget::ShareGPT => "https://huggingface.co",
+            DatasetTarget::AyaDataset => "data/train-00000-of-00001.parquet",
+            DatasetTarget::CodeXGLUE => "code-to-code/trans/train.jsonl",
+            DatasetTarget::TheStackV2 => "data/train-00000-of-00100.parquet",
+            DatasetTarget::ShareGPT => "ShareGPT_V3_unfiltered_cleaned_split.json",
         }
     }
 }
@@ -49,35 +51,29 @@ impl DataLoader {
         }
     }
 
-    /// جلب تدفق البيانات الحقيقية 100% مباشرة من Hugging Face Hub عبر اتصال آمن ومنخفض التأخير
-    pub async fn stream_from_hub(&self) -> Result<Bytes, String> {
+    /// 🚀 جلب وتحميل الملف الخام الكامل رسمياً وآلياً من الـ Hub وتخزينه في كاش الـ Workflow
+    pub async fn download_from_hub(&self) -> Result<PathBuf, String> {
         info!(
-            "[DATA LOADER] Connecting to Live Hugging Face Hub endpoint: {}",
+            "[DATA LOADER] Authenticating & Connecting to Hugging Face Hub for: {}",
             self.target.as_str()
         );
 
-        // فتح اتصال HTTP حقيقي وامتصاص البيانات الصافية مباشرة إلى الذاكرة
-        let client = reqwest::Client::new();
-        let response = client.get(self.target.as_live_url())
-            .header("User-Agent", "Directive-X-Sovereign-Engine")
-            .send()
-            .await
-            .map_err(|e| format!("[NETWORK ERROR] Failed to reach hub: {}", e))?;
+        // إنشاء اتصال رسمي عبر مكتبة hf-hub
+        let api = Api::new().map_err(|e| format!("[HF API ERROR] {}", e))?;
+        
+        // تحديد مستودع البيانات المستهدف
+        let repo = api.repo(Repo::new(self.target.as_str().to_string(), RepoType::Dataset));
 
-        if !response.status().is_success() {
-            return Err(format!("[HTTP ERROR] Hub responded with status: {}", response.status()));
-        }
-
-        let bytes = response.bytes().await
-            .map_err(|e| format!("[STREAM ERROR] Failed to buffer raw dataset: {}", e))?;
+        // سحب الملف الحقيقي وتخزينه محلياً على القرص الصلب للـ GitHub Actions Runner
+        let local_path = repo.get(self.target.as_file_name()).await
+            .map_err(|e| format!("[DOWNLOAD ERROR] Failed to fetch raw file: {}", e))?;
 
         info!(
-            "[DATA LOADER] Stream established for {}. Ingested: {} REAL bytes buffer.",
-            self.target.as_str(),
-            bytes.len()
+            "[DATA LOADER] Secure download complete. Dataset anchored locally at: {:?}",
+            local_path
         );
 
-        Ok(bytes)
+        Ok(local_path)
     }
 
     /// قراءة وسكب البيانات المباشرة عبر Memory-Mapped I/O بدون تخزين مؤقت للوزن
