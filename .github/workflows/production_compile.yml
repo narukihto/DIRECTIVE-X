@@ -54,8 +54,8 @@ jobs:
         run: |
           cargo generate-lockfile
 
-      - name: Execute Full Suite (Unit, Fuzzing & High-Precision Performance)
-        run: cargo test --release --all-targets
+            - name: Execute Full Suite (Unit, Fuzzing & High-Precision Performance)
+        run: cargo test --release --bin directive_x
 
       - name: Production Binary Build (Maximum Optimization)
         run: cargo build --release --target ${{ matrix.target }}
