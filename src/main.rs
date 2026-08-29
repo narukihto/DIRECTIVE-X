@@ -57,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let total_epochs = 10;
 
-        // ب) 🌍 [تحديث موسوعي شامل]: دمج أهداف التريليونات الشاملة للعلوم والتاريخ البرمجي والبشري
+        // ب) 🌍 دمج أهداف التريليونات الشاملة للعلوم والتاريخ البرمجي والبشري
         let targets = vec![
             DatasetTarget::AyaDataset,
             DatasetTarget::CodeXGLUE,
@@ -175,7 +175,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("[UI] Booting Large Context Window Chunking Buffer...");
     let mut chunker = PromptChunker::new(128 * 1024);
     let sample_large_prompt = "DIRECTIVE-X: INGESTING HIGH-SCALE MULTI-LANGUAGE CONTEXT STREAM... ".repeat(100);
-    chunker.feed_str(sample_large_prompt);
+    
+    // 🎯 [تم الإصلاح الحتمي للسطر 178]: إضافة علامة المرجع & الصريحة المتوافقة مع نوع مدخلات الدالة
+    chunker.feed_str(&sample_large_prompt);
 
     let processed_chunks = chunker.process_all_chunks();
     info!("[UI] Successfully processed {} input chunks without context drops.", processed_chunks.len());
