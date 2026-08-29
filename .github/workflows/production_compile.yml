@@ -5,6 +5,8 @@ on:
     branches: [ "main", "release/*" ]
   pull_request:
     branches: [ "main" ]
+  repository_dispatch:
+    types: [auto_resume_training] # 🚀 البوابة التلقائية لاستقبال إشارة إعادة التشغيل المستمر
 
 env:
   CARGO_TERM_COLOR: always
@@ -21,12 +23,6 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             artifact_name: directive-x-linux-x86_64
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            artifact_name: directive-x-windows-x86_64.exe
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            artifact_name: directive-x-macos-arm64
 
     steps:
       - name: Checkout Source Repository
@@ -50,16 +46,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-v2-
 
-      # 💾 🔄 [تحديث استراتيجي]: استرجاع ملف الأوزان السيادي من الـ Run السابق لمواصلة التدريب التراكمي
+      # 💾 [استرجاع الأوزان]: جلب مصفوفة الأوزان المتراكمة من الـ 6 ساعات السابقة
       - name: Restore Neural Weights Matrix Cache
         uses: actions/cache@v4
         with:
           path: model_weights.safetensors
-          key: ${{ runner.os }}-neural-weights-${{ github.run_id }}-${{ github.run_attempt }}
+          key: ${{ runner.os }}-neural-weights-matrix
           restore-keys: |
-            ${{ runner.os }}-neural-weights-
+            ${{ runner.os }}-neural-weights-matrix
 
-       Tar Generate Clean Dependency Tree
+      # 🛠️ [تم الإصلاح الحتمي للسطر 31]: مسح تام للترويس النصية الخاطئة السابقة
       - name: Generate Clean Dependency Tree
         run: cargo generate-lockfile
 
@@ -69,16 +65,17 @@ jobs:
       - name: Production Binary Build (Maximum Optimization)
         run: cargo build --release --target ${{ matrix.target }}
 
+      # 🧠 🚀 [التدريب الشامل]: ترك المحرك يلتهم البيانات للـ 6 ساعات كاملة حتى يقفله نظام GitHub تلقائياً
       - name: Ingest Data Context & Train AI Model In-Memory
         run: cargo run --release --target ${{ matrix.target }} -- --train
 
-      # 🚀 💾 [تحديث استراتيجي]: حفظ وتحديث كاش الأوزان فوراً بعد انتهاء خطوة التدريب الحي لحمايته للمرة القادمة
+      # 🚀 [الإنقاذ الفوري]: حفظ وتحديث كاش الأوزان فوراً بعد انتهاء خطوة التدريب لحمايته للمرة القادمة
       - name: Save Neural Weights Matrix Cache
         uses: actions/cache@v4
-        if: always() # يضمن الحفظ حتى لو انقطع الـ Run بسبب الوقت لقفل المعرفة
+        if: always() # حاسم: يضمن الحفظ حتى لو انقطع الـ Run فجأة بسبب انتهاء وقت الـ 6 ساعات
         with:
           path: model_weights.safetensors
-          key: ${{ runner.os }}-neural-weights-${{ github.run_id }}-${{ github.run_attempt }}
+          key: ${{ runner.os }}-neural-weights-matrix
 
       - name: Install Python & GGUF Builder (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
@@ -96,16 +93,13 @@ jobs:
           import numpy as np
           from safetensors.numpy import load_file
 
-          # قراءة مصفوفات الأوزان الحقيقية الشاملة لجميع الطبقات
           weights = load_file('model_weights.safetensors')
-
           writer = gguf.GGUFWriter('directive_x.gguf', 'llama')
 
-          # قراءة الأبعاد الفعلية من مصفوفة التضمين المدربة في Rust
+          # إصلاح مصفوفة الأبعاد لقراءة الأوزان بدقة وسلاسة
           vocab_size = weights['token_embd.weight'].shape[0]
           hidden_size = weights['token_embd.weight'].shape[1]
 
-          # إضافة ترويسات المعمارية الصريحة المطلوبة لمشغلات llama.cpp / PocketPal
           writer.add_architecture()
           writer.add_vocab_size(vocab_size)
           writer.add_context_length(2048)
@@ -117,7 +111,6 @@ jobs:
           writer.add_layer_norm_rms_eps(1e-5)
           writer.add_file_type(gguf.GGMLQuantizationType.F16)
 
-          # كتابة مفردات التوكنز القياسية الشاملة
           tokens = [f'<token_{i}>'.encode('utf-8') for i in range(vocab_size)]
           scores = [0.0] * vocab_size
           toktypes = [1] * vocab_size
@@ -129,7 +122,6 @@ jobs:
           writer.add_bos_token_id(1)
           writer.add_eos_token_id(2)
 
-          # خريطة المطابقة المحدثة بالأسماء المعيارية لـ llama.cpp
           tensor_map = {
               'token_embd.weight': 'tok_embeddings.weight',
               'fc1.weight': 'blk.0.ffn_gate.weight',
@@ -148,22 +140,32 @@ jobs:
           writer.write_kv_data_to_file()
           writer.write_tensors_to_file()
           writer.close()
-          print('directive_x.gguf built successfully with real trained weights!')
+          print('directive_x.gguf built successfully!')
           "
 
       - name: Upload Sovereign GGUF Artifact for Mobile (Ubuntu Only)
-        if: matrix.os == 'ubuntu-latest' && always() # 🎯 حاسم: إنقاذ ملف الـ GGUF المحدث دائماً
+        if: matrix.os == 'ubuntu-latest' && always()
         uses: actions/upload-artifact@v4
         with:
           name: directive-x-android-ios-gguf
           path: directive_x.gguf
 
       - name: Upload Compiled Binary & Trained Weights Artifact
-        if: always() # 🎯 حاسم: إنقاذ الأوزان والملف التنفيذي حتى لو تم القطع بسبب انتهاء الـ 6 ساعات
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}-trained
           path: |
             target/${{ matrix.target }}/release/directive-x*
             model_weights.safetensors
+
+      # 🔄 🎯 [الـ Loop التلقائي اللانهائي]: استدعاء الـ API فوراً لإعادة التشغيل وبدء 6 ساعات جديدة
+      - name: Trigger Infinite Auto-Loop Resumption
+        if: always() # حاسم جداً: يضمن أنه بمجرد انغلاق الـ 6 ساعات السابقة، يتم قذف الإشارة فوراً لإطلاق الـ Run التالي
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://github.com{{ github.repository }}/dispatches \
+            -d '{"event_type": "auto_resume_training"}'
             
