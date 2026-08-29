@@ -71,29 +71,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             // 🧠 1. توليد العقد بناءً على القيم الفريدة للبايتات (من 0 إلى 255) مع تحديد النوع الموجب الصريح u32
                             let quantum_nodes: Vec<QuantumNode> = (0u32..=255u32)
                                 .map(|byte_val| QuantumNode {
-                                    id: byte_val as usize, // المعرّف هنا هو قيمة البايت نفسه
-                                    energy_scale: BigUint::from(byte_val), // قفل التوافق التام مع المترجم
-                                    frequency: byte_val as f64 * 1.44, // معامل الرنين الترددي الحتمي
+                                    id: byte_val as usize, 
+                                    energy_scale: BigUint::from(byte_val), 
+                                    frequency: byte_val as f64 * 1.44, 
                                 })
                                 .collect();
 
-                            let causal_engine = CausalCollapseSystem::new(quantum_nodes);
-                            let collapse_route = causal_engine.execute_collapse(); // قفل الأبعاد الحتمي واستخراج القيم الناجحة
+                            // تفعيل المحرك مع رفع سقف العتبة برمجياً للسماح بامتصاص حجم أضخم من التوكنز الصافية
+                            let mut causal_engine = CausalCollapseSystem::new(quantum_nodes);
+                            causal_engine.threshold_limit = 0.85; // 🚀 رفع العتبة لزيادة حجم البيانات الصافية المستوعبة
+                            
+                            let collapse_route = causal_engine.execute_collapse(); 
                             
                             info!("[CORE] Quantum Dim-Lock Completed. Active Symmetrical Byte Values Size: {}", collapse_route.len());
 
-                            // ⚡ 2. تصفية تيار البيانات بالكامل (الـ 137 مليون بايت أو الجيجابايت المتدفقة) بناءً على القيم المفلترة كوانتياً
+                            // ⚡ 2. تصفية تيار البيانات بالكامل بناءً على مصفوفة قفل الأبعاد الحتمية للمحرك
                             let tokens: Vec<u32> = raw_file_bytes.iter()
-                                .filter(|&&byte| collapse_route.contains(&(byte as usize))) // عبور كامل تيار البيانات المليوني بنجاح
+                                .filter(|&&byte| collapse_route.contains(&(byte as usize))) 
                                 .map(|&b| (b as u32) % (vocab_size as u32))
                                 .collect();
 
                             let total_tokens = tokens.len();
-                            let chunk_size = 16; // نافذة السياق التدريبية للزحف المتتالي
+                            let chunk_size = 16; 
 
                             if total_tokens > chunk_size {
                                 info!("[NEURAL ENGINE] Commencing sliding-window train pass on mass locked data. Total Tokens: {}", total_tokens);
                                 let mut offset = 0;
+                                
+                                // 🔄 [تم الإصلاح الجذري]: حلقة الزحف المتتالي المضمونة ضد التجميد
                                 while offset + chunk_size < total_tokens {
                                     let input_tokens = &tokens[offset..offset + chunk_size];
                                     let target_tokens = &tokens[offset + 1..=offset + chunk_size];
@@ -101,12 +106,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     for epoch in 1..=total_epochs {
                                         let training_loss = neural_net.train_step(input_tokens, target_tokens)?;
                                         
-                                        // تسجيل الملاحظات دورياً كل 25,000 خطوة زحف لمراقبة التدريب الفعلي الحقيقي
-                                        if offset % 25000 == 0 && epoch == total_epochs {
+                                        // 📊 تم تعديل معدل الطباعة إلى 1000 خطوة لتشاهد التدفق الفوري السريع للأرقام في السجلات
+                                        if offset % 1000 == 0 && epoch == total_epochs {
                                             info!("🔥 [NEURAL ENGINE] [{}] Pos: {}/{}. Shard Loss: {:.6}", 
                                                 loader.target.as_str(), offset, total_tokens, training_loss);
                                         }
                                     }
+                                    
+                                    // 🎯 الإصلاح الحاسم: دفع المؤشر للأمام بمسافة حجم النافذة لإنهاء الحلقة فوراً وبسرعة
                                     offset += chunk_size;
                                 }
                             }
