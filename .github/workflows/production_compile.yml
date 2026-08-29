@@ -87,6 +87,9 @@ jobs:
           vocab_size = weights['token_embd.weight'].shape[0]
           hidden_size = weights['token_embd.weight'].shape[1]
 
+          # إضافة ترويسات المعمارية الصريحة المطلوبة لمشغلات llama.cpp / PocketPal
+          writer.add_architecture()
+          writer.add_vocab_size(vocab_size)
           writer.add_context_length(2048)
           writer.add_embedding_length(hidden_size)
           writer.add_block_count(1)
@@ -108,9 +111,9 @@ jobs:
           writer.add_bos_token_id(1)
           writer.add_eos_token_id(2)
 
-          # خريطة المطابقة الكاملة للتنسورات الحقيقية
+          # خريطة المطابقة المحدثة بالأسماء المعيارية لـ llama.cpp
           tensor_map = {
-              'token_embd.weight': 'token_embd.weight',
+              'token_embd.weight': 'tok_embeddings.weight',
               'fc1.weight': 'blk.0.ffn_gate.weight',
               'fc1.bias': 'blk.0.ffn_gate.bias',
               'fc2.weight': 'blk.0.ffn_down.weight',
