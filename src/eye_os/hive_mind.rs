@@ -3,8 +3,10 @@ use std::time::Instant;
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
 
-// استدعاء مكونات النظام للتواصل الداخلي المباشر عبر جذر الـ Binary الثابت
-use crate::neural::candle_network::CandleNetwork;
+// استخدام الحيلة البرمجية لنطاقات الملفات التشاركية الموحدة لتخطي عزل الـ Binary Tests
+#[path = "../neural/candle_network.rs"]
+pub mod candle_network_fallback;
+use candle_network_fallback::CandleNetwork;
 
 /// يمثل وكيلاً من الوكلاء الـ 12 في خلية المعالجة الموزعة الحية
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -61,7 +63,7 @@ impl HiveMind {
         }
     }
 
-    /// توجيه مهمة حقيقية وحقنها داخل Matrix الأوزان بالاستعارة المتغيرة المحمية
+    /// توجيه مهمة حقيقية وحقنها داخل المصفوفة العصبية بالاستعارة المتغيرة المصححة
     pub fn dispatch_task(
         &mut self, 
         agent_id: usize, 
