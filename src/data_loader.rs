@@ -1,10 +1,7 @@
 use std::fs::File;
 use std::io::{Read, Result as IoResult};
 use std::path::{Path, PathBuf};
-use bytes::Bytes;
 use log::{info, warn};
-use rayon::prelude::*;
-// استيراد المكتبة الرسمية التي تم تأمينها في الـ Cargo.toml
 use hf_hub::{api::tokio::Api, Repo, RepoType};
 
 /// المجموعات البرمجية واللغوية المستهدفة للجلب المباشر والحقيقي
@@ -26,13 +23,14 @@ impl DatasetTarget {
         }
     }
 
-    /// 📦 تحديد المسارات الداخلية الصافية والدقيقة للملفات الخام داخل المستودعات
-    pub fn as_file_name(&self) -> &'static str {
+    /// 📦 توليد مصفوفة الشظايا المتتالية لامتصاص حجم التريليونات بالتوالي
+    pub fn get_target_shards(&self) -> Vec<String> {
         match self {
-            DatasetTarget::AyaDataset => "data/train-00000-of-00001.parquet",
-            DatasetTarget::CodeXGLUE => "code-to-code/trans/train.jsonl",
-            DatasetTarget::TheStackV2 => "data/train-00000-of-00100.parquet",
-            DatasetTarget::ShareGPT => "ShareGPT_V3_unfiltered_cleaned_split.json",
+            // سحب عينات متتالية بصيغها الحقيقية لبدء التهام الحجم الكبير
+            DatasetTarget::TheStackV2 => (0..3).map(|i| format!("data/train-{:05}-of-01000.parquet", i)).collect(),
+            DatasetTarget::AyaDataset => vec!["data/train-00000-of-00001.parquet".to_string()],
+            DatasetTarget::CodeXGLUE => vec!["code-to-code/trans/train.jsonl".to_string()],
+            DatasetTarget::ShareGPT => vec!["ShareGPT_V3_unfiltered_cleaned_split.json".to_string()],
         }
     }
 }
@@ -51,27 +49,19 @@ impl DataLoader {
         }
     }
 
-    /// 🚀 جلب وتحميل الملف الخام الكامل رسمياً وآلياً من الـ Hub وتخزينه في كاش الـ Workflow
-    pub async fn download_from_hub(&self) -> Result<PathBuf, String> {
+    /// 🚀 جلب شظية محددة رسمياً وآلياً من الـ Hub وتخزينها محلياً في الكاش
+    pub async fn download_shard_from_hub(&self, shard_name: &str) -> Result<PathBuf, String> {
         info!(
-            "[DATA LOADER] Authenticating & Connecting to Hugging Face Hub for: {}",
-            self.target.as_str()
+            "[DATA LOADER] Connecting to official Hub Shard: {} -> {}",
+            self.target.as_str(),
+            shard_name
         );
 
-        // إنشاء اتصال رسمي عبر مكتبة hf-hub
         let api = Api::new().map_err(|e| format!("[HF API ERROR] {}", e))?;
-        
-        // تحديد مستودع البيانات المستهدف
         let repo = api.repo(Repo::new(self.target.as_str().to_string(), RepoType::Dataset));
 
-        // سحب الملف الحقيقي وتخزينه محلياً على القرص الصلب للـ GitHub Actions Runner
-        let local_path = repo.get(self.target.as_file_name()).await
-            .map_err(|e| format!("[DOWNLOAD ERROR] Failed to fetch raw file: {}", e))?;
-
-        info!(
-            "[DATA LOADER] Secure download complete. Dataset anchored locally at: {:?}",
-            local_path
-        );
+        let local_path = repo.get(shard_name).await
+            .map_err(|e| format!("[DOWNLOAD ERROR] Failed to fetch raw shard: {}", e))?;
 
         Ok(local_path)
     }
@@ -81,26 +71,6 @@ impl DataLoader {
         let mut file = File::open(file_path)?;
         let mut buffer = Vec::with_capacity(self.buffer_capacity);
         file.read_to_end(&mut buffer)?;
-
-        info!(
-            "[DATA LOADER] Memory-Mapped pass executed. Ingested {} raw bytes to Core Tensor Frame.",
-            buffer.len()
-        );
-
         Ok(buffer)
-    }
-
-    /// معالجة موازية للمصفوفات والرموز باستخدام Rayon لتمريرها مباشرة لمحرك Rust Core
-    pub fn process_parallel_bytes(&self, raw_bytes: &[u8]) -> Vec<f32> {
-        if raw_bytes.is_empty() {
-            warn!("[DATA LOADER] Received empty byte stream for processing.");
-            return vec![];
-        }
-
-        // تحويل البايتات مباشرة إلى قيم طافية (Floats) لاستخدامها داخل التنسور بدون Tokenizer
-        raw_bytes
-            .par_iter()
-            .map(|&byte| (byte as f32) / 255.0)
-            .collect()
     }
 }
