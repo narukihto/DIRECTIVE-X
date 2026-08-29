@@ -63,6 +63,30 @@ jobs:
       - name: Ingest Data Context & Train AI Model In-Memory
         run: cargo run --release --target ${{ matrix.target }} -- --train
 
+      # --- [توجيه الجهد الصافي: تحويل وتجهيز ملف الـ GGUF للهاتف] ---
+      - name: Install Python & GGUF Conversion Tooling (Ubuntu Only)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Build GGUF Sovereign Weights (Ubuntu Only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          pip install gguf safetensors numpy torch --no-cache-dir
+          curl -L -o convert_hf_to_gguf.py https://githubusercontent.com
+          mkdir -p ./hf_model_format
+          cp model_weights.safetensors ./hf_model_format/
+          python convert_hf_to_gguf.py ./hf_model_format/ --outtype f16 --output directive_x.gguf
+
+      - name: Upload Sovereign GGUF Artifact for Mobile (Ubuntu Only)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: directive-x-android-ios-gguf
+          path: directive_x.gguf
+
+      # --- [رفع الملفات والـ Binaries الأصلية كالمعتاد] ---
       - name: Upload Compiled Binary & Trained Weights Artifact
         uses: actions/upload-artifact@v4
         with:
