@@ -1,4 +1,4 @@
-طname: DIRECTIVE-X Production Cross-Platform Build & Verification
+name: DIRECTIVE-X Production Cross-Platform Build & Verification
 
 on:
   push:
