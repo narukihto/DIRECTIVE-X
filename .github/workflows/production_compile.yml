@@ -80,10 +80,11 @@ jobs:
 
           print('[+] Sovereign GGUF Metadata & Tokenizer Engine starting...')
           weights = load_file('model_weights.safetensors')
+          
+          # إسناد المعمارية 'llama' أوتوماتيكياً عند إنشاء الكائن ومنع التكرار
           writer = gguf.GGUFWriter('directive_x.gguf', 'llama')
 
-          # 1. إدراج المعلمات القياسية التي تطلبها محركات الهواتف (PocketPal / llama.cpp)
-          writer.add_architecture()
+          # 1. إدراج المعلمات القياسية لمحركات الهواتف
           writer.add_name('directive_x')
           writer.add_context_length(2048)
           writer.add_embedding_length(512)
@@ -92,9 +93,11 @@ jobs:
           writer.add_head_count(8)
           writer.add_head_count_kv(8)
           writer.add_layer_norm_eps(1e-5)
-          writer.add_file_type(gguf.GGMLFileType.MOSTLY_F16)
+          
+          # استخدام القيمة الرقمية القياسية لـ float16 (1) لمنع خطأ Enum الاصدارات
+          writer.add_file_type(1)
 
-          # 2. بناء وتأمين الـ Tokenizer مدمج ذاتياً بدون ملفات خارجية
+          # 2. بناء الـ Tokenizer مدمج ذاتياً
           tokens = ['<unk>', '<s>', '</s>']
           writer.add_tokenizer_model('llama')
           writer.add_token_list(tokens)
@@ -103,7 +106,7 @@ jobs:
           writer.add_bos_token_id(1)
           writer.add_eos_token_id(2)
 
-          # 3. كتابة مصفوفات الأوزان بتحويل f16
+          # 3. كتابة مصفوفات الأوزان
           for name, tensor in weights.items():
               arr = tensor.detach().cpu().numpy().astype('float16')
               writer.add_tensor(name, arr)
