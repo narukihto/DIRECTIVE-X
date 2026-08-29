@@ -1,4 +1,4 @@
-Name: DIRECTIVE-X Production Cross-Platform Build & Verification
+name: DIRECTIVE-X Production Cross-Platform Build & Verification
 
 on:
   push:
@@ -80,17 +80,8 @@ jobs:
           
           print('[+] Local Sovereign conversion engine started...')
           weights = load_file('model_weights.safetensors')
+          writer = gguf.GGUFWriter('directive_x.gguf', 'directive_x')
           
-          # إنشاء الكاتب وتحديد اسم المعمارية 'llama' لتتمكن المشغلات المحمولة من التعرف عليه
-          writer = gguf.GGUFWriter('directive_x.gguf', 'llama')
-          
-          # كتابة وسوم الهيكلية والتسلسل القياسي دون استدعاء دوال مبهمة
-          writer.add_string('general.architecture', 'llama')
-          writer.add_string('general.name', 'directive_x')
-          writer.add_uint32('llama.context_length', 2048)
-          writer.add_uint32('llama.embedding_length', 512)
-          writer.add_uint32('llama.block_count', 1)
-
           for name, tensor in weights.items():
               arr = tensor.detach().cpu().numpy().astype('float16')
               writer.add_tensor(name, arr)
@@ -99,7 +90,7 @@ jobs:
           writer.write_kv_data_to_file()
           writer.write_tensors_to_file()
           writer.close()
-          print('[✓] GGUF conversion successful and validated.')
+          print('[✓] GGUF conversion successful.')
           "
 
       - name: Upload Sovereign GGUF Artifact for Mobile (Ubuntu Only)
