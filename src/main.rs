@@ -68,11 +68,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             
                             info!("⚡ [QUANTUM MASK] Injecting Causal Collapse System for Dimensional Locking...");
                             
-                            // 🧠 1. توليد العقد بناءً على القيم الفريدة للبايتات (من 0 إلى 255) لقفل تردداتها حتمياً
-                            let quantum_nodes: Vec<QuantumNode> = (0..=255)
+                            // 🧠 1. توليد العقد بناءً على القيم الفريدة للبايتات (من 0 إلى 255) مع تحديد النوع الموجب الصريح u32
+                            let quantum_nodes: Vec<QuantumNode> = (0u32..=255u32)
                                 .map(|byte_val| QuantumNode {
                                     id: byte_val as usize, // المعرّف هنا هو قيمة البايت نفسه
-                                    energy_scale: BigUint::from(byte_val),
+                                    energy_scale: BigUint::from(byte_val), // قفل التوافق التام مع المترجم
                                     frequency: byte_val as f64 * 1.44, // معامل الرنين الترددي الحتمي
                                 })
                                 .collect();
@@ -82,7 +82,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             
                             info!("[CORE] Quantum Dim-Lock Completed. Active Symmetrical Byte Values Size: {}", collapse_route.len());
 
-                            // ⚡ 2. تصفية تيار البيانات بالكامل (الـ 137 مليون بايت) بناءً على القيم المفلترة كوانتياً
+                            // ⚡ 2. تصفية تيار البيانات بالكامل (الـ 137 مليون بايت أو الجيجابايت المتدفقة) بناءً على القيم المفلترة كوانتياً
                             let tokens: Vec<u32> = raw_file_bytes.iter()
                                 .filter(|&&byte| collapse_route.contains(&(byte as usize))) // عبور كامل تيار البيانات المليوني بنجاح
                                 .map(|&b| (b as u32) % (vocab_size as u32))
