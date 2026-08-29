@@ -28,10 +28,11 @@ rand_core = "=0.6.4"
 rand_chacha = "=0.3.1"
 rand_distr = "=0.4.3"
 
-# Neural Framework (Candle 0.8.2)
+# Neural Framework (Candle 0.8.2) & Official Hub Connector
 candle-core = "0.8.2"
 candle-nn = "0.8.2"
 candle-transformers = "0.8.2"
+hf-hub = { version = "0.4.0", features = ["tokio"] } # 🚀 تم إضافة المكتبة الرسمية المتوافقة آلياً مع بيئة نظامك
 
 # Python / Mojo Interop
 pyo3 = { version = "0.21", features = ["extension-module", "abi3-py310"], optional = true }
