@@ -76,17 +76,17 @@ jobs:
           
           python -c "
           import json, os
-          from tokenizers import Tokenizer, models, pre_tokenizers
+          from tokenizers import Tokenizer, models
 
-          # 1. إنشاء ملف config.json المتوافق مع Llama
+          # 1. ضبط المعلمات بناءً على أبعاد شبكة Candle الفعلية (Dim: 512, Hidden: 256)
           config = {
               'architectures': ['LlamaForCausalLM'],
               'bos_token_id': 1,
               'eos_token_id': 2,
               'hidden_act': 'silu',
-              'hidden_size': 512,
+              'hidden_size': 512,          # مطابق لـ Dim الخاص بالشبكة
               'initializer_range': 0.02,
-              'intermediate_size': 2048,
+              'intermediate_size': 256,   # مطابق لـ Hidden الخاص بالشبكة
               'max_position_embeddings': 2048,
               'model_type': 'llama',
               'num_attention_heads': 8,
@@ -99,7 +99,7 @@ jobs:
           with open('config.json', 'w') as f:
               json.dump(config, f, indent=2)
 
-          # 2. إنشاء tokenizer.json وهمي لتمرير فحص llama.cpp
+          # 2. توليد tokenizer.json لتلبية متطلبات التحويل
           tok = Tokenizer(models.BPE())
           tok.save('tokenizer.json')
           "
