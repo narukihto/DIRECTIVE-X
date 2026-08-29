@@ -78,12 +78,14 @@ jobs:
           import numpy as np
           from safetensors.numpy import load_file
 
+          # قراءة مصفوفات الأوزان الحقيقية الشاملة لجميع الطبقات
           weights = load_file('model_weights.safetensors')
 
           writer = gguf.GGUFWriter('directive_x.gguf', 'llama')
 
-          vocab_size = 32000
-          hidden_size = 512
+          # قراءة الأبعاد الفعلية من مصفوفة التضمين المدربة في Rust
+          vocab_size = weights['token_embd.weight'].shape[0]
+          hidden_size = weights['token_embd.weight'].shape[1]
 
           writer.add_context_length(2048)
           writer.add_embedding_length(hidden_size)
@@ -94,7 +96,8 @@ jobs:
           writer.add_layer_norm_rms_eps(1e-5)
           writer.add_file_type(gguf.GGMLQuantizationType.F16)
 
-          tokens = [f'[TOKEN_{i}]'.encode('utf-8') for i in range(vocab_size)]
+          # كتابة مفردات التوكنز القياسية الشاملة
+          tokens = [f'<token_{i}>'.encode('utf-8') for i in range(vocab_size)]
           scores = [0.0] * vocab_size
           toktypes = [1] * vocab_size
 
@@ -105,26 +108,26 @@ jobs:
           writer.add_bos_token_id(1)
           writer.add_eos_token_id(2)
 
+          # خريطة المطابقة الكاملة للتنسورات الحقيقية
           tensor_map = {
+              'token_embd.weight': 'token_embd.weight',
               'fc1.weight': 'blk.0.ffn_gate.weight',
               'fc1.bias': 'blk.0.ffn_gate.bias',
               'fc2.weight': 'blk.0.ffn_down.weight',
               'fc2.bias': 'blk.0.ffn_down.bias',
+              'output.weight': 'output.weight',
+              'output.bias': 'output.bias',
           }
 
           for src_name, array in weights.items():
               dest_name = tensor_map.get(src_name, src_name)
               writer.add_tensor(dest_name, array.astype(np.float16))
 
-          embd = np.zeros((vocab_size, hidden_size), dtype=np.float16)
-          writer.add_tensor('token_embd.weight', embd)
-          writer.add_tensor('output.weight', embd)
-
           writer.write_header_to_file()
           writer.write_kv_data_to_file()
           writer.write_tensors_to_file()
           writer.close()
-          print('directive_x.gguf built successfully for Atomic Chat!')
+          print('directive_x.gguf built successfully with real trained weights!')
           "
 
       - name: Upload Sovereign GGUF Artifact for Mobile (Ubuntu Only)
