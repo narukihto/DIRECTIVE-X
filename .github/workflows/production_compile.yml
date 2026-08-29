@@ -1,4 +1,4 @@
-Name: DIRECTIVE-X Production Cross-Platform Build & Verification
+name: DIRECTIVE-X Production Cross-Platform Build & Verification
 
 on:
   push:
@@ -62,7 +62,6 @@ jobs:
       - name: Ingest Data Context & Train AI Model In-Memory
         run: cargo run --release --target ${{ matrix.target }} -- --train
 
-      # --- Python & GGUF Mobile Conversion ---
       - name: Install Python & GGUF Conversion Tooling (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
         uses: actions/setup-python@v5
@@ -76,12 +75,12 @@ jobs:
           
           python -c "
           import os
-          from gguf import GGUFWriter
+          import gguf
           from safetensors.torch import load_file
           
           print('[+] Local Sovereign conversion engine started...')
           weights = load_file('model_weights.safetensors')
-          writer = GGUFWriter('directive_x.gguf', 'directive_x')
+          writer = gguf.GGUFWriter('directive_x.gguf', 'directive_x')
           
           for name, tensor in weights.items():
               arr = tensor.detach().cpu().numpy().astype('float16')
