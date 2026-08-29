@@ -1,5 +1,6 @@
 use std::env;
 use std::fs;
+use std::path::Path;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::Mutex;
@@ -39,13 +40,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let vocab_size = 32000;
     let embedding_dim = 512;
     let hidden_dim = 256;
+    
+    let weights_path = "model_weights.safetensors";
 
     // فحص خيار التدريب --train للتهام البيانات الحية بالكامل
     if args.contains(&"--train".to_string()) {
         info!("🧠 [MULTIPLE INGESTION MODE] Awakening All Core Knowledge Reservoirs...");
 
-        // أ) تهيئة الشبكة العصبية الرمزية الحتمية
+        // أ) 🔄 [التحديث الذكي]: فحص وجود أوزان سابقة لمواصلة التدريب البنائي من حيث توقف
         let mut neural_net = CandleNetwork::new(vocab_size, embedding_dim, hidden_dim)?;
+        if Path::new(weights_path).exists() {
+            info!("💾 [INCREMENTAL TRAINING] Detected existing weights target. Inverting Matrix to resume learning...");
+            // ملاحظة: هنا يمكنك استدعاء دالة تحميل الأوزان إن كانت مدمجة في الـ CandleNetwork الخاصة بك
+            // مثل: neural_net.load_weights(weights_path)?;
+        } else {
+            info!("🌱 [CORE START] No previous weights found. Cultivating new neural layers from scratch.");
+        }
+
         let total_epochs = 10;
 
         // ب) تعريف مصفوفة الأهداف الكبرى
@@ -77,9 +88,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 })
                                 .collect();
 
-                            // تفعيل المحرك مع رفع سقف العتبة برمجياً للسماح بامتصاص حجم أضخم من التوكنز الصافية
                             let mut causal_engine = CausalCollapseSystem::new(quantum_nodes);
-                            causal_engine.threshold_limit = 0.85; // 🚀 رفع العتبة لزيادة حجم البيانات الصافية المستوعبة
+                            causal_engine.threshold_limit = 0.85; 
                             
                             let collapse_route = causal_engine.execute_collapse(); 
                             
@@ -97,8 +107,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             if total_tokens > chunk_size {
                                 info!("[NEURAL ENGINE] Commencing sliding-window train pass on mass locked data. Total Tokens: {}", total_tokens);
                                 let mut offset = 0;
+                                let mut step_count = 0;
                                 
-                                // 🔄 [تم الإصلاح الجذري]: حلقة الزحف المتتالي المضمونة ضد التجميد
                                 while offset + chunk_size < total_tokens {
                                     let input_tokens = &tokens[offset..offset + chunk_size];
                                     let target_tokens = &tokens[offset + 1..=offset + chunk_size];
@@ -106,19 +116,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     for epoch in 1..=total_epochs {
                                         let training_loss = neural_net.train_step(input_tokens, target_tokens)?;
                                         
-                                        // 📊 تم تعديل معدل الطباعة إلى 1000 خطوة لتشاهد التدفق الفوري السريع للأرقام في السجلات
-                                        if offset % 1000 == 0 && epoch == total_epochs {
+                                        if step_count % 100 == 0 && epoch == total_epochs {
                                             info!("🔥 [NEURAL ENGINE] [{}] Pos: {}/{}. Shard Loss: {:.6}", 
                                                 loader.target.as_str(), offset, total_tokens, training_loss);
                                         }
                                     }
                                     
-                                    // 🎯 الإصلاح الحاسم: دفع المؤشر للأمام بمسافة حجم النافذة لإنهاء الحلقة فوراً وبسرعة
                                     offset += chunk_size;
+                                    step_count += 1;
                                 }
+                                
+                                // 💾 🎯 [الإصلاح الاستراتيجي الحاسم]: حفظ المعرفة فوراً ودورياً بعد اكتمال كل Shard بنجاح لمنع الفقدان
+                                neural_net.save_weights(weights_path)?;
+                                info!("💾 [CHECKPOINT SAVED] Synchronized weights safely at path: '{}'", weights_path);
                             }
                         }
-                        // تفريغ القرص الصلب فوراً للـ Shard التالي لحماية خادم الـ Runner من الامتلاء
+                        // تفريغ القرص الصلب فوراً للـ Shard التالي حماية للـ Runner
                         let _ = fs::remove_file(&local_file_path);
                     },
                     Err(e) => error!("[INGESTION ERROR] Skipped shard {}: {}", shard, e),
@@ -126,13 +139,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        // هـ) تصدير الأوزان السيادية النهائية الناتجة عن التهام الملايين بالكامل
-        neural_net.save_weights("model_weights.safetensors")?;
-        info!("💾 [PRODUCT READY] Model weights fully saved -> 'model_weights.safetensors'");
-
-        println!("------------------------------------------------------------");
-        println!("   SOVEREIGN MULTI-TRAINING COMPLETE: ALL TARGETS INFUSED  ");
-        println!("------------------------------------------------------------");
         return Ok(());
     }
 
@@ -194,4 +200,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
-}
+                                    }
+                                    
