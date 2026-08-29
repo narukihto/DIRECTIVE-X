@@ -4,13 +4,15 @@ use std::path::{Path, PathBuf};
 use log::{info, warn};
 use hf_hub::{api::tokio::Api, Repo, RepoType};
 
-/// المجموعات البرمجية واللغوية المستهدفة للجلب المباشر والحقيقي
+/// المجموعات البرمجية واللغوية والعلمية الشاملة لامتصاص المعرفة الموسوعية الفلكية
 #[derive(Debug, Clone)]
 pub enum DatasetTarget {
-    TheStackV2,
-    CodeXGLUE,
-    AyaDataset,
-    ShareGPT,
+    TheStackV2,    // مستودع الأكواد السيادية الفائق والكامل
+    CodeXGLUE,     // بنية فهم وترجمة الأكواد
+    AyaDataset,    // النواة اللغوية ومتعددة اللغات الصافية
+    ShareGPT,      // منطق المحادثات والتفكير المسترسل والجدل
+    FineWebEdu,    // 🧠 النواة التعليمية: صفوة العلوم والمنطق والرياضيات المصفاة عالمياً
+    Wikipedia,     // 🌍 النواة التاريخية والثقافية: خلاصة الموسوعات البشرية الشاملة
 }
 
 impl DatasetTarget {
@@ -20,15 +22,27 @@ impl DatasetTarget {
             DatasetTarget::CodeXGLUE => "microsoft/CodeXGLUE",
             DatasetTarget::AyaDataset => "CohereForAI/aya_dataset",
             DatasetTarget::ShareGPT => "anon8231489123/ShareGPT_Vicuna_unfiltered",
+            DatasetTarget::FineWebEdu => "HuggingFaceFW/fineweb-edu", // المستودع التأسيسي الخارق للعلوم
+            DatasetTarget::Wikipedia => "wikimedia/wikipedia",       // مستودع المعرفة البشرية الشامل
         }
     }
 
-    /// 📦 🌍 توليد مصفوفة الشظايا العملاقة لامتصاص مئات الجيجابايت والمليارات بالتوالي
+    /// 📦 🌍 توليد مصفوفة الشظايا العملاقة لامتصاص مئات الجيجابايت والتريليونات اللانهائية بالتوالي
     pub fn get_target_shards(&self) -> Vec<String> {
         match self {
-            // 🚀 تكبير هائل: سحب أول 200 شظية ضخمة من مستودع الأكواد الفائق (حوالي 60 جيجابايت من النصوص الصافية)
-            DatasetTarget::TheStackV2 => (0..200).map(|i| format!("data/train-{:05}-of-01000.parquet", i)).collect(),
+            // 🚀 التهام كامل فلكي: فتح العداد ليمسح الـ 1000 ملف بالكامل لمستودع الأكواد (امتصاص كامل المصادر)
+            DatasetTarget::TheStackV2 => (0..1000).map(|i| format!("data/train-{:05}-of-01000.parquet", i)).collect(),
             
+            // 🧠 التهام النواة التعليمية والعلوم الفوقية: سحب أول 100 شظية ضخمة من العلوم الصافية لـ FineWeb
+            DatasetTarget::FineWebEdu => (0..100).map(|i| format!("sample/10BT/train-{:05}-of-00100.parquet", i)).collect(),
+
+            // 🌍 التهام خلاصة التاريخ والموسوعات: سحب شظايا الموسوعة العالمية الشاملة ويكيبيديا
+            DatasetTarget::Wikipedia => vec![
+                "20231101.en/train-00000-of-00003.parquet".to_string(),
+                "20231101.en/train-00000-of-00002.parquet".to_string(),
+                "20231101.ar/train-00000-of-00001.parquet".to_string(), // تضمين اللغة العربية الموسوعية
+            ],
+
             // سحب الملف الشامل لبيانات آيا متعددة اللغات
             DatasetTarget::AyaDataset => vec!["data/train-00000-of-00001.parquet".to_string()],
             
@@ -55,7 +69,7 @@ impl DataLoader {
         }
     }
 
-    /// 🚀 جلب شظية محددة رسمياً وآلياً من الـ Hub وتخزينها محلياً في الكاش
+    /// 🚀 جلب شظية محددة رسمياً وآلياً عبر مكتبة hf-hub وتخزينها محلياً في الكاش
     pub async fn download_shard_from_hub(&self, shard_name: &str) -> Result<PathBuf, String> {
         info!(
             "[DATA LOADER] Connecting to official Hub Shard: {} -> {}",
