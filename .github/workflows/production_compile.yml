@@ -1,4 +1,4 @@
-name: DIRECTIVE-X Production Cross-Platform Build & Verification
+طname: DIRECTIVE-X Production Cross-Platform Build & Verification
 
 on:
   push:
@@ -82,7 +82,6 @@ jobs:
 
           writer = gguf.GGUFWriter('directive_x.gguf', 'llama')
 
-          # 1. المعلمات الأساسية للبنية
           vocab_size = 32000
           hidden_size = 512
 
@@ -95,18 +94,17 @@ jobs:
           writer.add_layer_norm_rms_eps(1e-5)
           writer.add_file_type(gguf.GGMLQuantizationType.F16)
 
-          # 2. إضافة Vocab وهمي لتشغيل المحرك في Atomic Chat
           tokens = [f'[TOKEN_{i}]'.encode('utf-8') for i in range(vocab_size)]
           scores = [0.0] * vocab_size
           toktypes = [1] * vocab_size
+
           writer.add_tokenizer_model('llama')
-          writer.add_tokenizer_tokens(tokens)
+          writer.add_token_list(tokens)
           writer.add_token_scores(scores)
           writer.add_token_types(toktypes)
           writer.add_bos_token_id(1)
           writer.add_eos_token_id(2)
 
-          # 3. توفيق أوزان Rust مع GGUF
           tensor_map = {
               'fc1.weight': 'blk.0.ffn_gate.weight',
               'fc1.bias': 'blk.0.ffn_gate.bias',
@@ -118,7 +116,6 @@ jobs:
               dest_name = tensor_map.get(src_name, src_name)
               writer.add_tensor(dest_name, array.astype(np.float16))
 
-          # 4. إكمال المصفوفات الأساسية لتفادي رفض Atomic Chat للنموذج
           embd = np.zeros((vocab_size, hidden_size), dtype=np.float16)
           writer.add_tensor('token_embd.weight', embd)
           writer.add_tensor('output.weight', embd)
