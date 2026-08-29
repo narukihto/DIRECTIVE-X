@@ -56,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             DatasetTarget::ShareGPT,
         ];
 
-        // ج) حلقة التدريب الشاملة عبر التلقيم والفلترة الكوانتية المتتالية
+        // ج) حلقة التدريب الشاملة عبر التلقيم والفلترة الكوانتية المتتالية لامتصاص الملايين بالكامل
         for target in targets {
             let loader = DataLoader::new(target.clone(), 64 * 1024 * 1024);
             let shards = target.get_target_shards();
@@ -68,31 +68,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             
                             info!("⚡ [QUANTUM MASK] Injecting Causal Collapse System for Dimensional Locking...");
                             
-                            // 🧠 تحويل كتل البايتات الحية (حتى 100,000 عقدة متزامنة) لقفل أبعادها عبر محركك
-                            let quantum_nodes: Vec<QuantumNode> = raw_file_bytes.iter().take(100000).enumerate()
-                                .map(|(idx, &byte)| QuantumNode {
-                                    id: idx,
-                                    energy_scale: BigUint::from(byte),
-                                    frequency: byte as f64 * 1.44, // معامل رنين ترددي حتمي
+                            // 🧠 1. توليد العقد بناءً على القيم الفريدة للبايتات (من 0 إلى 255) لقفل تردداتها حتمياً
+                            let quantum_nodes: Vec<QuantumNode> = (0..=255)
+                                .map(|byte_val| QuantumNode {
+                                    id: byte_val as usize, // المعرّف هنا هو قيمة البايت نفسه
+                                    energy_scale: BigUint::from(byte_val),
+                                    frequency: byte_val as f64 * 1.44, // معامل الرنين الترددي الحتمي
                                 })
                                 .collect();
 
                             let causal_engine = CausalCollapseSystem::new(quantum_nodes);
-                            let collapse_route = causal_engine.execute_collapse(); // قفل الأبعاد الحتمي واستخراج الفهرس الصالح
+                            let collapse_route = causal_engine.execute_collapse(); // قفل الأبعاد الحتمي واستخراج القيم الناجحة
                             
-                            info!("[CORE] Quantum Dim-Lock Completed. Active Symmetrical Node Path Size: {}", collapse_route.len());
+                            info!("[CORE] Quantum Dim-Lock Completed. Active Symmetrical Byte Values Size: {}", collapse_route.len());
 
-                            // تصفية تيار البايتات بالكامل وتحويل العناصر النظيفة المتوافقة ترددياً فقط إلى توكنز
-                            let tokens: Vec<u32> = raw_file_bytes.iter().enumerate()
-                                .filter(|(idx, _)| collapse_route.contains(idx)) // مقصلة إسقاط الضوضاء والرموز الشاذة
-                                .map(|(_, &b)| (b as u32) % (vocab_size as u32))
+                            // ⚡ 2. تصفية تيار البيانات بالكامل (الـ 137 مليون بايت) بناءً على القيم المفلترة كوانتياً
+                            let tokens: Vec<u32> = raw_file_bytes.iter()
+                                .filter(|&&byte| collapse_route.contains(&(byte as usize))) // عبور كامل تيار البيانات المليوني بنجاح
+                                .map(|&b| (b as u32) % (vocab_size as u32))
                                 .collect();
 
                             let total_tokens = tokens.len();
                             let chunk_size = 16; // نافذة السياق التدريبية للزحف المتتالي
 
                             if total_tokens > chunk_size {
-                                info!("[NEURAL ENGINE] Commencing sliding-window train pass on locked data. Tokens: {}", total_tokens);
+                                info!("[NEURAL ENGINE] Commencing sliding-window train pass on mass locked data. Total Tokens: {}", total_tokens);
                                 let mut offset = 0;
                                 while offset + chunk_size < total_tokens {
                                     let input_tokens = &tokens[offset..offset + chunk_size];
@@ -101,7 +101,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     for epoch in 1..=total_epochs {
                                         let training_loss = neural_net.train_step(input_tokens, target_tokens)?;
                                         
-                                        // تسجيل الملاحظات دورياً كل 25,000 خطوة لحماية السجلات داخل الـ Workflow
+                                        // تسجيل الملاحظات دورياً كل 25,000 خطوة زحف لمراقبة التدريب الفعلي الحقيقي
                                         if offset % 25000 == 0 && epoch == total_epochs {
                                             info!("🔥 [NEURAL ENGINE] [{}] Pos: {}/{}. Shard Loss: {:.6}", 
                                                 loader.target.as_str(), offset, total_tokens, training_loss);
@@ -111,7 +111,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 }
                             }
                         }
-                        // تفريغ القرص الصلب فوراً لتحرير المساحة داخل خادم الـ Runner للـ Shard التالي
+                        // تفريغ القرص الصلب فوراً للـ Shard التالي لحماية خادم الـ Runner من الامتلاء
                         let _ = fs::remove_file(&local_file_path);
                     },
                     Err(e) => error!("[INGESTION ERROR] Skipped shard {}: {}", shard, e),
@@ -119,7 +119,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        // هـ) تصدير الأوزان السيادية النهائية الناتجة عن تصفية وقفل الأبعاد كوانتياً
+        // هـ) تصدير الأوزان السيادية النهائية الناتجة عن التهام الملايين بالكامل
         neural_net.save_weights("model_weights.safetensors")?;
         info!("💾 [PRODUCT READY] Model weights fully saved -> 'model_weights.safetensors'");
 
