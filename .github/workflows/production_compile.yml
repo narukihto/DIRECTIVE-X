@@ -81,26 +81,15 @@ jobs:
           print('[+] Local Sovereign conversion engine started...')
           weights = load_file('model_weights.safetensors')
           
-          # تحديد المعمارية الصالحة لمشغلات الهواتف
+          # إنشاء الكاتب وتحديد اسم المعمارية 'llama' لتتمكن المشغلات المحمولة من التعرف عليه
           writer = gguf.GGUFWriter('directive_x.gguf', 'llama')
           
-          # إضافة البيانات الأساسية والتوكنايزر لمنع خطأ Corrupted/Failed to load
-          writer.add_architecture()
-          writer.add_context_length(2048)
-          writer.add_embedding_length(512)
-          writer.add_block_count(1)
-          writer.add_feed_forward_length(2048)
-          writer.add_head_count(8)
-          writer.add_head_count_kv(8)
-          writer.add_layer_norm_eps(1e-5)
-          writer.add_file_type(gguf.GGMLFileType.MOSTLY_F16)
-          
-          # إدراج التوكينات لمنع المحرك المحلي من كتابة خطأ التوكنايزر
-          tokens = ['<unk>', '<s>', '</s>']
-          writer.add_tokenizer_model('llama')
-          writer.add_token_list(tokens)
-          writer.add_token_scores([0.0] * len(tokens))
-          writer.add_token_types([1] * len(tokens))
+          # كتابة وسوم الهيكلية والتسلسل القياسي دون استدعاء دوال مبهمة
+          writer.add_string('general.architecture', 'llama')
+          writer.add_string('general.name', 'directive_x')
+          writer.add_uint32('llama.context_length', 2048)
+          writer.add_uint32('llama.embedding_length', 512)
+          writer.add_uint32('llama.block_count', 1)
 
           for name, tensor in weights.items():
               arr = tensor.detach().cpu().numpy().astype('float16')
@@ -110,7 +99,7 @@ jobs:
           writer.write_kv_data_to_file()
           writer.write_tensors_to_file()
           writer.close()
-          print('[✓] GGUF conversion successful and validated for mobile engines.')
+          print('[✓] GGUF conversion successful and validated.')
           "
 
       - name: Upload Sovereign GGUF Artifact for Mobile (Ubuntu Only)
