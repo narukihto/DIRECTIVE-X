@@ -67,28 +67,48 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // د) حلقة التدريب الشاملة - بث كافة مجموعات البيانات الحقيقية وتوليد التوكنز الحقيقية
         for target in targets {
-            info!("🚀 [INGESTION] Opening Stream Channel for: {}", target.as_str());
+            info!("🚀 [INGESTION] Opening Hub Pipeline Channel for: {}", target.as_str());
 
-            let loader = DataLoader::new(target, 128 * 1024);
+            // تهيئة الـ Loader بـ سعة تخزينية تبلغ 2 ميجابايت للكتلة الواحدة لحماية الذاكرة
+            let loader = DataLoader::new(target, 2 * 1024 * 1024);
 
-            match loader.stream_from_hub().await {
-                Ok(raw_stream_bytes) => {
-                    // تحويل بيانات البايتات المجلوبة حقيقةً إلى أرقام توكنز حقيقية وضمن نطاق القاموس
-                    let tokens: Vec<u32> = raw_stream_bytes
-                        .iter()
-                        .map(|&b| (b as u32) % (vocab_size as u32))
-                        .collect();
+            // 1. استدعاء آلية التحميل الرسمية والمستقرة لحفظ الملف الخام على القرص
+            match loader.download_from_hub().await {
+                Ok(local_file_path) => {
+                    // 2. سكب بايتات الملف الكامل مباشرة عبر أنبوب Memory-Mapped IO المدمج بمشروعك
+                    match loader.mmap_pass_to_tensor_core(&local_file_path) {
+                        Ok(raw_file_bytes) => {
+                            // تحويل بايتات الملف الصافي بالكامل رياضياً وضمن نطاق القاموس
+                            let tokens: Vec<u32> = raw_file_bytes
+                                .iter()
+                                .map(|&b| (b as u32) % (vocab_size as u32))
+                                .collect();
 
-                    if tokens.len() > 16 {
-                        let chunk_size = 16;
-                        let input_tokens = &tokens[0..chunk_size];
-                        let target_tokens = &tokens[1..=chunk_size];
+                            let total_tokens = tokens.len();
+                            let chunk_size = 16; // حجم نافذة السياق لخطوة التدريب الواحدة
 
-                        for epoch in 1..=total_epochs {
-                            let training_loss = neural_net.train_step(input_tokens, target_tokens)?;
-                            info!("🔥 [NEURAL ENGINE] [{}] Epoch {}/{} Complete. Loss: {:.6}", 
-                                loader.target.as_str(), epoch, total_epochs, training_loss);
-                        }
+                            info!("[NEURAL ENGINE] Ingested {} tokens. Commencing sliding-window sequence loop...", total_tokens);
+
+                            // 3. 🔄 حلقة التدوير المتتالية (Sliding-Window Loop) للمرور على كامل محتوى الملف صعوداً
+                            let mut offset = 0;
+                            while offset + chunk_size < total_tokens {
+                                let input_tokens = &tokens[offset..offset + chunk_size];
+                                let target_tokens = &tokens[offset + 1..=offset + chunk_size];
+
+                                for epoch in 1..=total_epochs {
+                                    let training_loss = neural_net.train_step(input_tokens, target_tokens)?;
+                                    
+                                    // تسجيل الملاحظات دورياً كل 5000 خطوة لتجنب ملء سجلات الـ Workflow نصوصاً
+                                    if offset % 5000 == 0 && epoch == total_epochs {
+                                        info!("🔥 [NEURAL ENGINE] [{}] Position: {}/{}. Loss: {:.6}", 
+                                            loader.target.as_str(), offset, total_tokens, training_loss);
+                                    }
+                                }
+                                // الزحف للأمام بمسافة حجم النافذة لتلقيم التتابع التالي للشبكة
+                                offset += chunk_size;
+                            }
+                        },
+                        Err(e) => error!("[MMAP ERROR] Failed to map local file to core framework: {}", e),
                     }
                 },
                 Err(e) => {
