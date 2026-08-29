@@ -23,13 +23,19 @@ impl DatasetTarget {
         }
     }
 
-    /// 📦 توليد مصفوفة الشظايا المتتالية لامتصاص حجم التريليونات بالتوالي
+    /// 📦 🌍 توليد مصفوفة الشظايا العملاقة لامتصاص مئات الجيجابايت والمليارات بالتوالي
     pub fn get_target_shards(&self) -> Vec<String> {
         match self {
-            // سحب عينات متتالية بصيغها الحقيقية لبدء التهام الحجم الكبير
-            DatasetTarget::TheStackV2 => (0..3).map(|i| format!("data/train-{:05}-of-01000.parquet", i)).collect(),
+            // 🚀 تكبير هائل: سحب أول 200 شظية ضخمة من مستودع الأكواد الفائق (حوالي 60 جيجابايت من النصوص الصافية)
+            DatasetTarget::TheStackV2 => (0..200).map(|i| format!("data/train-{:05}-of-01000.parquet", i)).collect(),
+            
+            // سحب الملف الشامل لبيانات آيا متعددة اللغات
             DatasetTarget::AyaDataset => vec!["data/train-00000-of-00001.parquet".to_string()],
+            
+            // سحب ملف كود إكس جلو بالكامل
             DatasetTarget::CodeXGLUE => vec!["code-to-code/trans/train.jsonl".to_string()],
+            
+            // سحب ملف المحادثات الصافي بالكامل
             DatasetTarget::ShareGPT => vec!["ShareGPT_V3_unfiltered_cleaned_split.json".to_string()],
         }
     }
