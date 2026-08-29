@@ -62,61 +62,42 @@ jobs:
       - name: Ingest Data Context & Train AI Model In-Memory
         run: cargo run --release --target ${{ matrix.target }} -- --train
 
-      - name: Install Python & GGUF Conversion Tooling (Ubuntu Only)
+      - name: Install Python & Official Conversion Tooling (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Build GGUF Sovereign Weights (Ubuntu Only)
+      - name: Build Atomic Chat Compatible GGUF (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          pip install gguf safetensors numpy torch --no-cache-dir
+          pip install safetensors numpy torch gguf --no-cache-dir
+          git clone https://github.com/ggerganov/llama.cpp.git --depth 1
           
           python -c "
-          import os
-          import gguf
-          from safetensors.torch import load_file
-
-          print('[+] Sovereign GGUF Metadata & Tokenizer Engine starting...')
-          weights = load_file('model_weights.safetensors')
-          
-          # إسناد المعمارية 'llama' أوتوماتيكياً عند إنشاء الكائن ومنع التكرار
-          writer = gguf.GGUFWriter('directive_x.gguf', 'llama')
-
-          # 1. إدراج المعلمات القياسية لمحركات الهواتف
-          writer.add_name('directive_x')
-          writer.add_context_length(2048)
-          writer.add_embedding_length(512)
-          writer.add_block_count(1)
-          writer.add_feed_forward_length(2048)
-          writer.add_head_count(8)
-          writer.add_head_count_kv(8)
-          writer.add_layer_norm_eps(1e-5)
-          
-          # استخدام القيمة الرقمية القياسية لـ float16 (1) لمنع خطأ Enum الاصدارات
-          writer.add_file_type(1)
-
-          # 2. بناء الـ Tokenizer مدمج ذاتياً
-          tokens = ['<unk>', '<s>', '</s>']
-          writer.add_tokenizer_model('llama')
-          writer.add_token_list(tokens)
-          writer.add_token_scores([0.0] * len(tokens))
-          writer.add_token_types([1, 2, 3])
-          writer.add_bos_token_id(1)
-          writer.add_eos_token_id(2)
-
-          # 3. كتابة مصفوفات الأوزان
-          for name, tensor in weights.items():
-              arr = tensor.detach().cpu().numpy().astype('float16')
-              writer.add_tensor(name, arr)
-
-          writer.write_header_to_file()
-          writer.write_kv_data_to_file()
-          writer.write_tensors_to_file()
-          writer.close()
-          print('[✓] GGUF file generated with valid Metadata & Tokenizer successfully.')
+          import json, os
+          config = {
+              'architectures': ['LlamaForCausalLM'],
+              'bos_token_id': 1,
+              'eos_token_id': 2,
+              'hidden_act': 'silu',
+              'hidden_size': 512,
+              'initializer_range': 0.02,
+              'intermediate_size': 2048,
+              'max_position_embeddings': 2048,
+              'model_type': 'llama',
+              'num_attention_heads': 8,
+              'num_hidden_layers': 1,
+              'num_key_value_heads': 8,
+              'rms_norm_eps': 1e-05,
+              'torch_dtype': 'float16',
+              'vocab_size': 32000
+          }
+          with open('config.json', 'w') as f:
+              json.dump(config, f, indent=2)
           "
+          
+          python llama.cpp/convert_hf_to_gguf.py . --outfile directive_x.gguf --outtype f16
 
       - name: Upload Sovereign GGUF Artifact for Mobile (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
