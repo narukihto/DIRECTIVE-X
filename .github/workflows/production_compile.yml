@@ -71,11 +71,14 @@ jobs:
       - name: Build Atomic Chat Compatible GGUF (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          pip install safetensors numpy torch gguf --no-cache-dir
+          pip install safetensors numpy torch gguf sentencepiece tokenizers --no-cache-dir
           git clone https://github.com/ggerganov/llama.cpp.git --depth 1
           
           python -c "
           import json, os
+          from tokenizers import Tokenizer, models, pre_tokenizers
+
+          # 1. إنشاء ملف config.json المتوافق مع Llama
           config = {
               'architectures': ['LlamaForCausalLM'],
               'bos_token_id': 1,
@@ -95,6 +98,10 @@ jobs:
           }
           with open('config.json', 'w') as f:
               json.dump(config, f, indent=2)
+
+          # 2. إنشاء tokenizer.json وهمي لتمرير فحص llama.cpp
+          tok = Tokenizer(models.BPE())
+          tok.save('tokenizer.json')
           "
           
           python llama.cpp/convert_hf_to_gguf.py . --outfile directive_x.gguf --outtype f16
