@@ -62,7 +62,7 @@ jobs:
       - name: Ingest Data Context & Train AI Model In-Memory
         run: cargo run --release --target ${{ matrix.target }} -- --train
 
-      - name: Install Python & Official Conversion Tooling (Ubuntu Only)
+      - name: Install Python & Native GGUF Library (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
         uses: actions/setup-python@v5
         with:
@@ -71,38 +71,49 @@ jobs:
       - name: Build Atomic Chat Compatible GGUF (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          pip install safetensors numpy torch gguf sentencepiece tokenizers transformers --no-cache-dir
-          git clone https://github.com/ggerganov/llama.cpp.git --depth 1
+          pip install safetensors numpy gguf --no-cache-dir
           
           python -c "
-          import json, os
-          from tokenizers import Tokenizer, models
+          import gguf
+          import numpy as np
+          from safetensors.torch import load_file
 
-          config = {
-              'architectures': ['LlamaForCausalLM'],
-              'bos_token_id': 1,
-              'eos_token_id': 2,
-              'hidden_act': 'silu',
-              'hidden_size': 512,
-              'initializer_range': 0.02,
-              'intermediate_size': 256,
-              'max_position_embeddings': 2048,
-              'model_type': 'llama',
-              'num_attention_heads': 8,
-              'num_hidden_layers': 1,
-              'num_key_value_heads': 8,
-              'rms_norm_eps': 1e-05,
-              'torch_dtype': 'float16',
-              'vocab_size': 32000
+          # 1. قراءة أوزان Candle المستخرجة مباشرة
+          weights = load_file('model_weights.safetensors')
+
+          # 2. إنشاء كاتب GGUF وتحديد معالم المعمارية المباشرة
+          writer = gguf.GGUFWriter('directive_x.gguf', 'llama')
+
+          # إضافة الهيدر المخصص متوافق مع Atomic Chat
+          writer.add_architecture()
+          writer.add_context_length(2048)
+          writer.add_embedding_length(512)
+          writer.add_block_count(1)
+          writer.add_feed_forward_length(256)
+          writer.add_head_count(8)
+          writer.add_head_count_kv(8)
+          writer.add_layer_norm_rms_eps(1e-5)
+          writer.add_file_type(gguf.GGMLQuantizationType.F16)
+
+          # 3. تعيين وإدراج المصفوفات المباشرة إلى الهيكل المتوافق مع GGUF
+          tensor_map = {
+              'fc1.weight': 'blk.0.ffn_gate.weight',
+              'fc1.bias': 'blk.0.ffn_gate.bias',
+              'fc2.weight': 'blk.0.ffn_down.weight',
+              'fc2.bias': 'blk.0.ffn_down.bias',
           }
-          with open('config.json', 'w') as f:
-              json.dump(config, f, indent=2)
 
-          tok = Tokenizer(models.BPE())
-          tok.save('tokenizer.json')
+          for src_name, tensor in weights.items():
+              dest_name = tensor_map.get(src_name, src_name)
+              data = tensor.cpu().numpy().astype(np.float16)
+              writer.add_tensor(dest_name, data)
+
+          writer.write_header_to_file()
+          writer.write_kv_data_to_file()
+          writer.write_tensors_to_file()
+          writer.close()
+          print('Successfully built directive_x.gguf via GGUF SDK!')
           "
-          
-          python llama.cpp/convert_hf_to_gguf.py . --outfile directive_x.gguf --outtype f16
 
       - name: Upload Sovereign GGUF Artifact for Mobile (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
