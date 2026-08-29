@@ -62,7 +62,7 @@ jobs:
       - name: Ingest Data Context & Train AI Model In-Memory
         run: cargo run --release --target ${{ matrix.target }} -- --train
 
-      # --- [تحويل وتجهيز ملف الـ GGUF للهاتف] ---
+      # --- Python & GGUF Mobile Conversion ---
       - name: Install Python & GGUF Conversion Tooling (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
         uses: actions/setup-python@v5
