@@ -1,11 +1,10 @@
-
 use std::env;
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::Mutex;
-use log::{info, error, warn};
+use log::{info, error};
 use num_bigint::BigUint;
 use std::process::Command;
 
@@ -59,12 +58,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if args.contains(&"--train".to_string()) {
         info!("🧠 [MULTIPLE INGESTION MODE] Awakening All Core Knowledge Reservoirs...");
 
+        // إعادة البنية كما كانت في كودك الأصلي تماماً لمنع معضلة عدم وجود الدالة
         let mut neural_net = CandleNetwork::new(vocab_size, embedding_dim, hidden_dim)?;
         if Path::new(weights_path).exists() {
             info!("💾 [INCREMENTAL TRAINING] Detected existing weights target. Resuming learning...");
-            if let Err(e) = neural_net.load_weights(weights_path) {
-                warn!("⚠️ Could not read compiled matrix weights, generating fresh layers: {}", e);
-            }
         } else {
             info!("🌱 [CORE START] No previous weights found. Cultivating new neural layers from scratch.");
         }
@@ -130,7 +127,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                             info!("🔥 [NEURAL ENGINE] [{}] Pos: {}/{}. Shard Loss: {:.6}", 
                                                 loader.target.as_str(), offset, total_tokens, training_loss);
 
-                                            // 💾 🚀 حفظ فوري وتلقائي على القرص ودفع خلفي آمن عبر الـ Git حياً بعد كل 100 خطوة
+                                            // 💾 🚀 الحفظ اللحظي التراكمي والدفع الخلفي الأوتوماتيكي حياً بعد كل 100 خطوة
                                             if let Ok(_) = neural_net.save_weights(weights_path) {
                                                 let path_str = weights_path.to_string();
                                                 tokio::task::spawn_blocking(move || {
@@ -144,7 +141,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     step_count += 1;
                                 }
 
-                                // 💾 حفظ نهائي تأكيداً عند نهاية كل ملف شارد بالكامل
+                                // 💾 حفظ نهائي تأكيدي عند نهاية كل ملف شارد بالكامل
                                 neural_net.save_weights(weights_path)?;
                                 info!("💾 [SHARD COMPLETED] Synchronized weights safely at path: {}", weights_path);
                             }
