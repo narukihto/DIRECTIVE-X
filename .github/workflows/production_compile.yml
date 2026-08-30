@@ -1,4 +1,3 @@
-
 name: DIRECTIVE-X Production Cross-Platform Build & Verification
 
 on:
@@ -11,7 +10,7 @@ on:
   workflow_dispatch: # 🚀 يسمح لك بتشغيل التدريب يدوياً في أي وقت للاختبار
 
 permissions:
-  contents: write # 🚀 حاسم جداً: يسمح لكود الـ Rust بدفع الأوزان وتأمينها حياً في المستودع لحظة بلحظة
+  contents: write # يسمح لكود الـ Rust بدفع الأوزان وتأمينها حياً في المستودع لحظة بلحظة
 
 env:
   CARGO_TERM_COLOR: always
@@ -32,6 +31,16 @@ jobs:
     steps:
       - name: Checkout Source Repository
         uses: actions/checkout@v4
+
+      # 🛠️ [إصلاح عقبة الـ 100MB]: تفعيل وتلقيم نظام الـ Git LFS داخل الـ Runner قبل بدء التدريب
+      - name: Initialize Git LFS Bypass for Large Matrices
+        run: |
+          git lfs install
+          git lfs track "model_weights.safetensors"
+          git add .gitattributes
+          git config user.name "Directive-X Bot"
+          git config user.email "bot@directive-x.internal"
+          git commit -m "📦 [SYSTEM] Initialized Git LFS dimensional tracking for matrix layers" || echo "Already tracking."
 
       - name: Setup Rust Toolchain & Target
         uses: dtolnay/rust-toolchain@stable
