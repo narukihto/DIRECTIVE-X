@@ -4,7 +4,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::Mutex;
-use log::{info, error};
+use log::{info, error, warn}; // تضمين الـ warn لإلغاء تحذيرات المترجم
 use num_bigint::BigUint;
 use std::process::Command;
 
@@ -21,17 +21,15 @@ use crate::eye_os::rust_bus::RustBus;
 use crate::eye_os::hive_mind::HiveMind;
 use crate::neural::candle_network::CandleNetwork;
 use crate::ui::prompt_chunker::PromptChunker;
-use crate::ui::terminal_gui::TerminalGui;
-use crate::data_loader::{DataLoader, DatasetTarget};
 
-/// 🚀 دالة المزامنة الحية الخلفية لدفع الأوزان المحدثة إلى المستودع فوراً ولحظة بلحظة
+/// 🚀 دالة المزامنة الحية الخلفية لدفع الأوزان المحدثة إلى المستودع عبر ممر الـ LFS الآمن
 fn live_git_sync(weights_path: &str) {
     if Path::new(weights_path).exists() {
         let _ = Command::new("git").args(&["config", "user.name", "Directive-X Bot"]).status();
         let _ = Command::new("git").args(&["config", "user.email", "bot@directive-x.internal"]).status();
         let _ = Command::new("git").args(&["add", weights_path]).status();
         let _ = Command::new("git")
-            .args(&["commit", "-m", "🧠 [LIVE WEIGHTS UPDATE] Synchronized state instantly"])
+            .args(&["commit", "-m", "🧠 [LIVE WEIGHTS UPDATE] Synchronized state instantly via LFS"])
             .status();
         let _ = Command::new("git").args(&["push"]).status();
     }
@@ -58,7 +56,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if args.contains(&"--train".to_string()) {
         info!("🧠 [MULTIPLE INGESTION MODE] Awakening All Core Knowledge Reservoirs...");
 
-        // إعادة البنية كما كانت في كودك الأصلي تماماً لمنع معضلة عدم وجود الدالة
         let mut neural_net = CandleNetwork::new(vocab_size, embedding_dim, hidden_dim)?;
         if Path::new(weights_path).exists() {
             info!("💾 [INCREMENTAL TRAINING] Detected existing weights target. Resuming learning...");
@@ -127,21 +124,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                             info!("🔥 [NEURAL ENGINE] [{}] Pos: {}/{}. Shard Loss: {:.6}", 
                                                 loader.target.as_str(), offset, total_tokens, training_loss);
 
-                                            // 💾 🚀 الحفظ اللحظي التراكمي والدفع الخلفي الأوتوماتيكي حياً بعد كل 100 خطوة
-                                            if let Ok(_) = neural_net.save_weights(weights_path) {
-                                                let path_str = weights_path.to_string();
-                                                tokio::task::spawn_blocking(move || {
-                                                    live_git_sync(&path_str);
-                                                });
-                                            }
+                                            // 💾 حفظ محلي فوري فائق السرعة على القرص (يضمن تحديث الأرقام والـ Loss حياً على الشاشة)
+                                            let _ = neural_net.save_weights(weights_path);
                                         }
+                                    }
+
+                                    // 🚀 ⏱️ [التحديث الجوهري الخارق]: ترحيل ورفع الأوزان حياً للـ Git كل 5000 خطوة لتأمين طاقة الـ Runner وسرعة المعالجة
+                                    if step_count > 0 && step_count % 5000 == 0 {
+                                        let path_str = weights_path.to_string();
+                                        tokio::task::spawn_blocking(move || {
+                                            live_git_sync(&path_str);
+                                        });
                                     }
 
                                     offset += chunk_size;
                                     step_count += 1;
                                 }
 
-                                // 💾 حفظ نهائي تأكيدي عند نهاية كل ملف شارد بالكامل
+                                // 💾 حفظ نهائي تأكيدي بعد نهاية كل ملف شارد بالكامل
                                 neural_net.save_weights(weights_path)?;
                                 info!("💾 [SHARD COMPLETED] Synchronized weights safely at path: {}", weights_path);
                             }
@@ -169,12 +169,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     info!("[SYSTEM] Loading Neural Inversion Matrix for Core Inference Pass...");
-    let mut runtime_neural_net = CandleNetwork::new(vocab_size, embedding_dim, hidden_dim)?;
+    let _runtime_neural_net = CandleNetwork::new(vocab_size, embedding_dim, hidden_dim)?;
 
     info!("[SYSTEM] Awakening the 12-Agent Swarm Orchestrator...");
-    let mut hive_mind = HiveMind::new();
-    let swarm_status = hive_mind.get_swarm_status();
-    info!("[HIVE MIND] Swarm fully online. Total Active Agents: {}", swarm_status.len());
+    let _hive_mind = HiveMind::new();
 
     info!("[CORE] Seeding Quantum Causal TSP Engine...");
     let initial_nodes = vec![
@@ -187,7 +185,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("[CORE] Initial Collapse Route Deterministically Solved: {:?}", collapse_route);
 
     info!("[UI] Booting Large Context Window Chunking Buffer...");
-    let mut chunker = PromptChunker::new(128 * 1024);
+    let _chunker = PromptChunker::new(128 * 1024);
 
     Ok(())
 }
