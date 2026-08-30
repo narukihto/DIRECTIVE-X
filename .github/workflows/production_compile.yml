@@ -47,14 +47,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-v2-
 
-      # 💾 [استرجاع الأوزان التراكمية]: استدعاء أحدث نسخة تم حفظها في الدورة السابقة
+      # 💾 [تم الإصلاح]: استخدام بادئة ثابتة ومتصلة بالمتغيرات لضمان البحث العكسي الناجح والتقاط المعرفة السابقة
       - name: Restore Neural Weights Matrix Cache
         uses: actions/cache@v4
         with:
           path: model_weights.safetensors
-          key: ${{ runner.os }}-neural-weights-${{ github.run_id }}-${{ github.run_attempt }}
+          key: ${{ runner.os }}-neural-weights-v1-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            ${{ runner.os }}-neural-weights-
+            ${{ runner.os }}-neural-weights-v1-
 
       - name: Generate Clean Dependency Tree
         run: cargo generate-lockfile
@@ -70,13 +70,13 @@ jobs:
         run: |
           timeout --signal=SIGINT 5.5h cargo run --release --target ${{ matrix.target }} -- --train || echo "🎯 Graceful 5.5h Limit Reached! Synapses anchored safely."
 
-      # 🚀 [التخزين المستمر]: تحديث فوري للأوزان المكتسبة وحفظها بمفتاح ديناميكي يقبله GitHub إجبارياً بعد انتهاء الـ 5.5 ساعة
+      # 🚀 [تم الإصلاح]: كتابة الكاش التراكمي الجديد ببادئة ثابتة تلائم الـ restore-keys ليتم قبول الحفظ واستدعاؤه الدورة القادمة
       - name: Save Neural Weights Matrix Cache
         uses: actions/cache@v4
         if: always() 
         with:
           path: model_weights.safetensors
-          key: ${{ runner.os }}-neural-weights-${{ github.run_id }}-${{ github.run_attempt }}
+          key: ${{ runner.os }}-neural-weights-v1-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Install Python & GGUF Builder (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
@@ -84,7 +84,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      # 🛠️ [تم الإصلاح]: بناء هندسة الـ GGUF من أوزان الـ Rust المحدثة بدون أخطاء نحوية
+      # 🛠️ بناء هندسة الـ GGUF من أوزان الـ Rust المحدثة
       - name: Build Atomic Chat Compatible GGUF (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest' && hashFiles('model_weights.safetensors') != ''
         run: |
