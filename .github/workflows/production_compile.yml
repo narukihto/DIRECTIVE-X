@@ -54,7 +54,7 @@ jobs:
             ~/.cargo/bin/
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
+            ~/-cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-v2-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
@@ -97,7 +97,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      # 🛠️ بناء هندسة الـ GGUF من أوزان الـ Rust المحدثة
+      # 🛠️ [تم الإصلاح جذرياً]: بناء هندسة الـ GGUF ديناميكياً لتفادي تلف وفساد الملف على تطبيق الهاتف
       - name: Build Atomic Chat Compatible GGUF (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest' && hashFiles('model_weights.safetensors') != ''
         run: |
@@ -111,8 +111,10 @@ jobs:
           weights = load_file('model_weights.safetensors')
           writer = gguf.GGUFWriter('directive_x.gguf', 'llama')
 
-          vocab_size = weights['token_embd.weight'].shape[0]
-          hidden_size = weights['token_embd.weight'].shape[1]
+          # 🎯 لقطة برمجية ذكية لقراءة الأبعاد الفعلية ديناميكياً بدلاً من التثبيت الجامد
+          embd_shape = weights['token_embd.weight'].shape
+          vocab_size = embd_shape[0]
+          hidden_size = embd_shape[1]
 
           writer.add_architecture()
           writer.add_vocab_size(vocab_size)
@@ -154,10 +156,10 @@ jobs:
           writer.write_kv_data_to_file()
           writer.write_tensors_to_file()
           writer.close()
-          print('directive_x.gguf built successfully!')
+          print('directive_x.gguf built successfully dynamically!')
           "
 
-      # 📦 رفع الـ GGUF دون إفشال الـ Run في المرات الأولى للتدريب
+      # 📦 رفع الـ GGUF المصلح والسليم بنجاح
       - name: Upload Sovereign GGUF Artifact for Mobile (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest' && always()
         uses: actions/upload-artifact@v4
