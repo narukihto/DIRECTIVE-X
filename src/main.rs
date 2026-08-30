@@ -1,11 +1,13 @@
+
 use std::env;
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio::sync::Mutex;
-use log::{info, error};
+use log::{info, error, warn};
 use num_bigint::BigUint;
+use std::process::Command;
 
 // استدعاء الوحدات البرمجية للنظام بالكامل
 pub mod core;
@@ -23,6 +25,19 @@ use crate::ui::prompt_chunker::PromptChunker;
 use crate::ui::terminal_gui::TerminalGui;
 use crate::data_loader::{DataLoader, DatasetTarget};
 
+/// 🚀 دالة المزامنة الحية الخلفية لدفع الأوزان المحدثة إلى المستودع فوراً ولحظة بلحظة
+fn live_git_sync(weights_path: &str) {
+    if Path::new(weights_path).exists() {
+        let _ = Command::new("git").args(&["config", "user.name", "Directive-X Bot"]).status();
+        let _ = Command::new("git").args(&["config", "user.email", "bot@directive-x.internal"]).status();
+        let _ = Command::new("git").args(&["add", weights_path]).status();
+        let _ = Command::new("git")
+            .args(&["commit", "-m", "🧠 [LIVE WEIGHTS UPDATE] Synchronized state instantly"])
+            .status();
+        let _ = Command::new("git").args(&["push"]).status();
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 1. تهيئة نظام تسجيل الملاحظات عالي السرعة
@@ -34,30 +49,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   DIRECTIVE-X: MAXIMUM SOVEREIGN CODE-GENERATOR COMPILER   ");
     println!("============================================================");
 
-    let start_init = Instant::now();
-
-    // خيارات الحجم القياسي للتوافق التام مع GGUF و Atomic Chat
     let vocab_size = 32000;
     let embedding_dim = 512;
     let hidden_dim = 256;
-    
+
     let weights_path = "model_weights.safetensors";
 
-    // فحص خيار التدريب --train للتهام البيانات الحية بالكامل وتحقيق الموسوعية الفلكية
+    // فحص خيار التدريب --train
     if args.contains(&"--train".to_string()) {
         info!("🧠 [MULTIPLE INGESTION MODE] Awakening All Core Knowledge Reservoirs...");
 
-        // أ) فحص وجود أوزان سابقة لمواصلة التدريب البنائي التراكمي اللانهائي
         let mut neural_net = CandleNetwork::new(vocab_size, embedding_dim, hidden_dim)?;
         if Path::new(weights_path).exists() {
             info!("💾 [INCREMENTAL TRAINING] Detected existing weights target. Resuming learning...");
+            if let Err(e) = neural_net.load_weights(weights_path) {
+                warn!("⚠️ Could not read compiled matrix weights, generating fresh layers: {}", e);
+            }
         } else {
             info!("🌱 [CORE START] No previous weights found. Cultivating new neural layers from scratch.");
         }
 
         let total_epochs = 10;
 
-        // ب) 🌍 دمج أهداف التريليونات الشاملة للعلوم والتاريخ البرمجي والبشري
         let targets = vec![
             DatasetTarget::AyaDataset,
             DatasetTarget::CodeXGLUE,
@@ -67,7 +80,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             DatasetTarget::Wikipedia,  
         ];
 
-        // ج) حلقة التدريب الشاملة عبر التلقيم والفلترة الكوانتية المتتالية لامتصاص الملايين بالكامل
         for target in targets {
             let loader = DataLoader::new(target.clone(), 64 * 1024 * 1024);
             let shards = target.get_target_shards();
@@ -76,10 +88,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 match loader.download_shard_from_hub(&shard).await {
                     Ok(local_file_path) => {
                         if let Ok(raw_file_bytes) = loader.mmap_pass_to_tensor_core(&local_file_path) {
-                            
+
                             info!("⚡ [QUANTUM MASK] Injecting Causal Collapse System for Dimensional Locking...");
-                            
-                            // 🧠 1. توليد العقد بناءً على القيم الفريدة للبايتات (من 0 إلى 255) مع تحديد النوع الموجب الصريح u32
+
                             let quantum_nodes: Vec<QuantumNode> = (0u32..=255u32)
                                 .map(|byte_val| QuantumNode {
                                     id: byte_val as usize, 
@@ -90,12 +101,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                             let mut causal_engine = CausalCollapseSystem::new(quantum_nodes);
                             causal_engine.threshold_limit = 0.85; 
-                            
+
                             let collapse_route = causal_engine.execute_collapse(); 
-                            
+
                             info!("[CORE] Quantum Dim-Lock Completed. Active Symmetrical Byte Values Size: {}", collapse_route.len());
 
-                            // ⚡ 2. تصفية تيار البيانات بالكامل بناءً على مصفوفة قفل الأبعاد الحتمية للمحرك السيادي
                             let tokens: Vec<u32> = raw_file_bytes.iter()
                                 .filter(|&&byte| collapse_route.contains(&(byte as usize))) 
                                 .map(|&b| (b as u32) % (vocab_size as u32))
@@ -108,30 +118,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 info!("[NEURAL ENGINE] Commencing sliding-window train pass on mass locked data. Total Tokens: {}", total_tokens);
                                 let mut offset = 0;
                                 let mut step_count = 0; 
-                                
+
                                 while offset + chunk_size < total_tokens {
                                     let input_tokens = &tokens[offset..offset + chunk_size];
                                     let target_tokens = &tokens[offset + 1..=offset + chunk_size];
 
                                     for epoch in 1..=total_epochs {
                                         let training_loss = neural_net.train_step(input_tokens, target_tokens)?;
-                                        
+
                                         if step_count % 100 == 0 && epoch == total_epochs {
                                             info!("🔥 [NEURAL ENGINE] [{}] Pos: {}/{}. Shard Loss: {:.6}", 
                                                 loader.target.as_str(), offset, total_tokens, training_loss);
+
+                                            // 💾 🚀 حفظ فوري وتلقائي على القرص ودفع خلفي آمن عبر الـ Git حياً بعد كل 100 خطوة
+                                            if let Ok(_) = neural_net.save_weights(weights_path) {
+                                                let path_str = weights_path.to_string();
+                                                tokio::task::spawn_blocking(move || {
+                                                    live_git_sync(&path_str);
+                                                });
+                                            }
                                         }
                                     }
-                                    
+
                                     offset += chunk_size;
                                     step_count += 1;
                                 }
-                                
-                                // 💾 [CHECKPOINT]: حفظ المعرفة فوراً ودورياً بعد اكتمال كل Shard بنجاح لتأمين الـ Loop اللانهائي
+
+                                // 💾 حفظ نهائي تأكيداً عند نهاية كل ملف شارد بالكامل
                                 neural_net.save_weights(weights_path)?;
-                                info!("💾 [CHECKPOINT SAVED] Synchronized weights safely at path: {}", weights_path);
+                                info!("💾 [SHARD COMPLETED] Synchronized weights safely at path: {}", weights_path);
                             }
                         }
-                        // تفريغ القرص الصلب فوراً للـ Shard التالي لحماية الـ Runner من الامتلاء
                         let _ = fs::remove_file(&local_file_path);
                     },
                     Err(e) => error!("[INGESTION ERROR] Skipped shard {}: {}", shard, e),
@@ -174,32 +191,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("[UI] Booting Large Context Window Chunking Buffer...");
     let mut chunker = PromptChunker::new(128 * 1024);
-    let sample_large_prompt = "DIRECTIVE-X: INGESTING HIGH-SCALE MULTI-LANGUAGE CONTEXT STREAM... ".repeat(100);
-    
-    // 🎯 [تم الإصلاح الحتمي للسطر 178]: إضافة علامة المرجع & الصريحة المتوافقة مع نوع مدخلات الدالة
-    chunker.feed_str(&sample_large_prompt);
-
-    let processed_chunks = chunker.process_all_chunks();
-    info!("[UI] Successfully processed {} input chunks without context drops.", processed_chunks.len());
-
-    info!("[HIVE MIND] Initiating Sovereign Agent Verification Dispatch...");
-    let test_payload = "COMPILER_DIRECTIVE_EVM_ARBITRAGE_CORE_DECOUPLE";
-
-    match hive_mind.dispatch_task(6, test_payload, &mut runtime_neural_net) {
-        Ok(res) => info!("[SWARM RESPONSE] {}", res),
-        Err(e) => error!("[SWARM FAIL] Swarm orchestrator bottleneck detected: {}", e)
-    }
-
-    info!("[SYSTEM] Engine fully online in {:.3?} ms.", start_init.elapsed().as_secs_f64() * 1000.0);
-    println!("------------------------------------------------------------");
-    println!("   SOVEREIGN ENGINE ACTIVE: READY FOR UNLIMITED GENERATION  ");
-    println!("------------------------------------------------------------");
-
-    info!("[UI] Launching Interactive Terminal Dashboard...");
-    let mut gui = TerminalGui::new();
-    if let Err(e) = gui.run() {
-        error!("[UI ERROR] Terminal GUI exited with error: {:?}", e);
-    }
 
     Ok(())
 }
