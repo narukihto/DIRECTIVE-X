@@ -1,3 +1,4 @@
+
 name: DIRECTIVE-X Production Cross-Platform Build & Verification
 
 on:
@@ -6,8 +7,11 @@ on:
     - cron: '17 0 * * *'  # الساعة 12:17 بعد منتصف الليل UTC
     - cron: '43 8 * * *'  # الساعة 8:43 صباحاً UTC
     - cron: '25 16 * * *' # الساعة 4:25 عصراً UTC
-  
+
   workflow_dispatch: # 🚀 يسمح لك بتشغيل التدريب يدوياً في أي وقت للاختبار
+
+permissions:
+  contents: write # 🚀 حاسم جداً: يسمح لكود الـ Rust بدفع الأوزان وتأمينها حياً في المستودع لحظة بلحظة
 
 env:
   CARGO_TERM_COLOR: always
@@ -47,7 +51,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-v2-
 
-      # 💾 [تم الإصلاح]: استخدام بادئة ثابتة ومتصلة بالمتغيرات لضمان البحث العكسي الناجح والتقاط المعرفة السابقة
+      # 💾 [استرجاع الأوزان التراكمية]: استدعاء أحدث نسخة تم حفظها في الدورة السابقة
       - name: Restore Neural Weights Matrix Cache
         uses: actions/cache@v4
         with:
@@ -70,7 +74,7 @@ jobs:
         run: |
           timeout --signal=SIGINT 5.5h cargo run --release --target ${{ matrix.target }} -- --train || echo "🎯 Graceful 5.5h Limit Reached! Synapses anchored safely."
 
-      # 🚀 [تم الإصلاح]: كتابة الكاش التراكمي الجديد ببادئة ثابتة تلائم الـ restore-keys ليتم قبول الحفظ واستدعاؤه الدورة القادمة
+      # 🚀 [التخزين المستمر]: تحديث فوري للأوزان المكتسبة وحفظها بمفتاح ديناميكي يقبله GitHub إجبارياً بعد انتهاء الـ 5.5 ساعة
       - name: Save Neural Weights Matrix Cache
         uses: actions/cache@v4
         if: always() 
