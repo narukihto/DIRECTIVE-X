@@ -1,12 +1,13 @@
 name: DIRECTIVE-X Production Cross-Platform Build & Verification
 
 on:
-  push:
-    branches: [ "main", "release/*" ]
-  pull_request:
-    branches: [ "main" ]
-  repository_dispatch:
-    types: [auto_resume_training] # 🚀 البوابة التلقائية لاستقبال إشارة إعادة التشغيل المستمر
+  schedule:
+    # ⏱️ [الجدولة النظامية الآمنة]: يعمل 3 مرات يومياً لتجنب أنظمة حظر GitHub
+    - cron: '17 0 * * *'  # الساعة 12:17 بعد منتصف الليل UTC
+    - cron: '43 8 * * *'  # الساعة 8:43 صباحاً UTC
+    - cron: '25 16 * * *' # الساعة 4:25 عصراً UTC
+  
+  workflow_dispatch: # 🚀 يسمح لك بتشغيل التدريب يدوياً في أي وقت للاختبار
 
 env:
   CARGO_TERM_COLOR: always
@@ -46,14 +47,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-v2-
 
-      # 💾 [استرجاع الأوزان]: جلب مصفوفة الأوزان المتراكمة من الـ 6 ساعات السابقة
+      # 💾 [استرجاع الأوزان التراكمية]: استدعاء أحدث نسخة تم حفظها في الدورة السابقة
       - name: Restore Neural Weights Matrix Cache
         uses: actions/cache@v4
         with:
           path: model_weights.safetensors
-          key: ${{ runner.os }}-neural-weights-matrix
+          key: ${{ runner.os }}-neural-weights-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            ${{ runner.os }}-neural-weights-matrix
+            ${{ runner.os }}-neural-weights-
 
       - name: Generate Clean Dependency Tree
         run: cargo generate-lockfile
@@ -64,18 +65,18 @@ jobs:
       - name: Production Binary Build (Maximum Optimization)
         run: cargo build --release --target ${{ matrix.target }}
 
-      # 🧠 ⏳ [التحديث الجوهري الخارق]: الإغلاق الآمن برمجياً عبر مقصلة زمنية داخلية تنتهي بعد 5.5 ساعة باحترام لحفظ الأوزان بسلام ومنع تلفها
+      # 🧠 ⏳ الإغلاق الآمن برمجياً عبر مقصلة زمنية تنتهي بعد 5.5 ساعة وحفظ الأوزان بسلام
       - name: Ingest Data Context & Train AI Model In-Memory
         run: |
           timeout --signal=SIGINT 5.5h cargo run --release --target ${{ matrix.target }} -- --train || echo "🎯 Graceful 5.5h Limit Reached! Synapses anchored safely."
 
-      # 🚀 [الإنقاذ الفوري]: حفظ وتحديث كاش الأوزان فوراً بعد انتهاء خطوة التدريب لحمايته للمرة القادمة
+      # 🚀 [التخزين المستمر]: تحديث فوري للأوزان المكتسبة وحفظها بمفتاح ديناميكي يقبله GitHub إجبارياً بعد انتهاء الـ 5.5 ساعة
       - name: Save Neural Weights Matrix Cache
         uses: actions/cache@v4
-        if: always() # حاسم: يضمن الحفظ حتى لو حدث طارئ لقفل المعرفة المكتسبة
+        if: always() 
         with:
           path: model_weights.safetensors
-          key: ${{ runner.os }}-neural-weights-matrix
+          key: ${{ runner.os }}-neural-weights-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Install Python & GGUF Builder (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest'
@@ -83,7 +84,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      # 🛠️ [إصلاح هندسة الـ GGUF]: تم تصحيح الفهارس البرمجية لقراءة المصفوفات بدقة متناهية من أوزان الـ Rust
+      # 🛠️ [تم الإصلاح]: بناء هندسة الـ GGUF من أوزان الـ Rust المحدثة بدون أخطاء نحوية
       - name: Build Atomic Chat Compatible GGUF (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest' && hashFiles('model_weights.safetensors') != ''
         run: |
@@ -97,7 +98,6 @@ jobs:
           weights = load_file('model_weights.safetensors')
           writer = gguf.GGUFWriter('directive_x.gguf', 'llama')
 
-          # 🎯 [تم الإصلاح]: جلب أبعاد مصفوفة التضمين كفهارس رقمية صريحة لتخطي أخطاء التحويل البايثونية
           vocab_size = weights['token_embd.weight'].shape[0]
           hidden_size = weights['token_embd.weight'].shape[1]
 
@@ -144,13 +144,16 @@ jobs:
           print('directive_x.gguf built successfully!')
           "
 
+      # 📦 رفع الـ GGUF دون إفشال الـ Run في المرات الأولى للتدريب
       - name: Upload Sovereign GGUF Artifact for Mobile (Ubuntu Only)
         if: matrix.os == 'ubuntu-latest' && always()
         uses: actions/upload-artifact@v4
         with:
           name: directive-x-android-ios-gguf
           path: directive_x.gguf
+          if-no-files-found: ignore 
 
+      # 📦 رفع الـ Binary والـ Safetensors المتاح دائمًا
       - name: Upload Compiled Binary & Trained Weights Artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -159,14 +162,4 @@ jobs:
           path: |
             target/${{ matrix.target }}/release/directive-x*
             model_weights.safetensors
-
-      # 🔄 🎯 [إصلاح رابط الـ Loop الأوتوماتيكي]: تصحيح صياغة مسار الـ curl لضرب الـ API لـ GitHub بدقة متناهية
-      - name: Trigger Infinite Auto-Loop Resumption
-        if: always()
-        run: |
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://github.com{{ github.repository }}/dispatches \
-            -d '{"event_type": "auto_resume_training"}'
-            
+          if-no-files-found: warn
